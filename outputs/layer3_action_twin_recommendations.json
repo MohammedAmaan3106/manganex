@@ -1,0 +1,62 @@
+{
+    "selected_zone": {
+        "cell_id": "Zone-M193",
+        "grade_pct": 33.9,
+        "prospectivity_score": 75.5
+    },
+    "baseline": {
+        "target_tons": 25000.0,
+        "predicted_tons": 8955.0,
+        "shortfall_tons": 16045.0
+    },
+    "scenarios": [
+        {
+            "scenario_id": "Scenario A",
+            "name": "Dynamic Blast Window Rescheduling",
+            "recovered_tonnage": 875.0,
+            "revised_production": 9830.0,
+            "shortfall_remaining": 15170.0,
+            "status": "Partial Recovery"
+        },
+        {
+            "scenario_id": "Scenario B",
+            "name": "Fleet Redeployment & Shift Extension",
+            "recovered_tonnage": 810.0,
+            "revised_production": 9765.0,
+            "shortfall_remaining": 15235.0,
+            "status": "Partial Recovery"
+        },
+        {
+            "scenario_id": "Scenario C",
+            "name": "Selective Face Prioritization (Zone-M193)",
+            "recovered_tonnage": 1690.0,
+            "revised_production": 10645.0,
+            "shortfall_remaining": 14355.0,
+            "status": "Partial Recovery"
+        },
+        {
+            "scenario_id": "Scenario D",
+            "name": "Composite Multi-Vector Strategy (Recommended)",
+            "recovered_tonnage": 5644.0,
+            "revised_production": 14599.0,
+            "shortfall_remaining": 10401.0,
+            "remaining_stockpile": 0.0,
+            "status": "Substantial Recovery"
+        }
+    ],
+    "recommended_action": {
+        "scenario_id": "Scenario D",
+        "name": "Composite Multi-Vector Strategy (Recommended)",
+        "recovered_tonnage": 5644.0,
+        "revised_production": 14599.0,
+        "shortfall_remaining": 10401.0,
+        "remaining_stockpile": 0.0,
+        "status": "Substantial Recovery"
+    },
+    "prescriptive_manager_directives": [
+        "1. DISPATCH ORDER: Re-route 2x 50-T Dumpers and 1x Excavator fleet directly to face [Zone-M193] (Estimated Grade: 33.9% Mn).",
+        "2. BLAST TIMING: Advance the 14:00 blast window by 90 minutes to evade satellite-predicted 71mm rainfall infiltration.",
+        "3. BENEFICIATION BLENDING: Blend 4,000 T from Stockpile Yard-3 with fresh feed from Zone-M193 to maintain constant 38% refinery grade.",
+        "4. FLEET MAINTENANCE: Schedule rapid 45-minute pit-stop servicing during the blasting evacuation clearance interval."
+    ]
+}

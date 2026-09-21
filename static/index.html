@@ -1,0 +1,1643 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MANGANEX | Tactical Mine Command & Space Intelligence Digital Twin</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        crimson: {
+                            950: '#070204',
+                            900: '#11060B',
+                            850: '#170910',
+                            800: '#230C18',
+                            700: '#3D1229',
+                            500: '#E11D48',
+                            400: '#FB7185',
+                            300: '#FDA4AF'
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+                        mono: ['"JetBrains Mono"', 'monospace']
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <style>
+        :root {
+            --neon-glow: rgba(225, 29, 72, 0.45);
+            --card-border: rgba(244, 63, 94, 0.22);
+            --card-bg: linear-gradient(135deg, rgba(23, 9, 16, 0.72) 0%, rgba(12, 4, 8, 0.88) 100%);
+        }
+
+        body { 
+            background-color: #060204; 
+            color: #F8FAFC; 
+            font-family: 'Plus Jakarta Sans', sans-serif; 
+            overflow-x: hidden; 
+            letter-spacing: -0.01em;
+            background-image: 
+                radial-gradient(circle at 50% 0%, rgba(225, 29, 72, 0.12) 0%, transparent 60%),
+                radial-gradient(rgba(244, 63, 94, 0.04) 1px, transparent 0);
+            background-size: 100% 100%, 28px 28px;
+            background-attachment: fixed;
+        }
+
+        #cursor-glow {
+            position: fixed;
+            width: 600px;
+            height: 600px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(225, 29, 72, 0.14) 0%, rgba(225, 29, 72, 0.03) 45%, transparent 70%);
+            pointer-events: none;
+            transform: translate(-50%, -50%);
+            z-index: 2;
+            mix-blend-mode: screen;
+            will-change: transform;
+        }
+
+        #cursor-dot {
+            position: fixed;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background-color: #FB7185;
+            box-shadow: 0 0 12px #E11D48, 0 0 20px #E11D48;
+            pointer-events: none;
+            transform: translate(-50%, -50%);
+            z-index: 1000;
+            transition: transform 0.08s ease-out;
+        }
+
+        .crimson-panel {
+            background: var(--card-bg);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid var(--card-border);
+            border-radius: 16px;
+            box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.9), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+            transition: transform 0.15s ease-out, border-color 0.25s ease, box-shadow 0.25s ease;
+            transform-style: preserve-3d;
+            will-change: transform;
+        }
+
+        .crimson-panel:hover {
+            border-color: rgba(244, 63, 94, 0.55);
+            box-shadow: 0 16px 40px -10px rgba(0, 0, 0, 0.95), 0 0 28px rgba(225, 29, 72, 0.25);
+        }
+
+        .tactical-border-pulse {
+            animation: radarBorder 3.5s infinite ease-in-out;
+        }
+
+        @keyframes radarBorder {
+            0% { border-color: rgba(244, 63, 94, 0.2); box-shadow: 0 0 10px rgba(225, 29, 72, 0.08); }
+            50% { border-color: rgba(244, 63, 94, 0.65); box-shadow: 0 0 25px rgba(225, 29, 72, 0.28); }
+            100% { border-color: rgba(244, 63, 94, 0.2); box-shadow: 0 0 10px rgba(225, 29, 72, 0.08); }
+        }
+
+        .side-nav-btn {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            width: 100%;
+            padding: 11px 14px;
+            border-radius: 10px;
+            font-family: 'JetBrains Mono', monospace;
+            font-weight: 500;
+            font-size: 11.5px;
+            color: #94A3B8;
+            transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+            border: 1px solid transparent;
+            background: transparent;
+        }
+        .side-nav-btn:hover {
+            color: #FFFFFF;
+            background: rgba(45, 13, 27, 0.45);
+            border-color: rgba(244, 63, 94, 0.25);
+            transform: translateX(4px);
+        }
+        .side-nav-btn.active {
+            background: linear-gradient(90deg, rgba(225, 29, 72, 0.28) 0%, rgba(225, 29, 72, 0.04) 100%);
+            color: #FDA4AF;
+            border-color: rgba(244, 63, 94, 0.6);
+            font-weight: 700;
+            box-shadow: inset 0 0 18px rgba(225, 29, 72, 0.2), 0 0 12px rgba(225, 29, 72, 0.2);
+        }
+
+        .sop-directive {
+            background: rgba(12, 4, 8, 0.85);
+            border-left: 3px solid #E11D48;
+            border-top: 1px solid rgba(244, 63, 94, 0.15);
+            border-right: 1px solid rgba(244, 63, 94, 0.15);
+            border-bottom: 1px solid rgba(244, 63, 94, 0.15);
+            padding: 12px 16px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 11.5px;
+            color: #FECDD3;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            box-shadow: inset 0 0 12px rgba(0, 0, 0, 0.6);
+            line-height: 1.5;
+        }
+
+        .leaflet-container { background: #0b0307 !important; }
+        .leaflet-tile-pane { filter: contrast(1.15) brightness(0.85) saturate(1.1); }
+        .leaflet-tooltip-tactical {
+            background: rgba(12, 4, 8, 0.95) !important;
+            border: 1px solid rgba(244, 63, 94, 0.7) !important;
+            color: #F8FAFC !important;
+            font-family: 'JetBrains Mono', monospace !important;
+            font-size: 11px !important;
+            border-radius: 8px !important;
+            padding: 9px 13px !important;
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.9), 0 0 14px rgba(225, 29, 72, 0.3) !important;
+            backdrop-filter: blur(12px) !important;
+        }
+
+        @keyframes sweepRotate {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+        .radar-sweep-line {
+            transform-origin: 50% 50%;
+            animation: sweepRotate 4s linear infinite;
+        }
+
+        input[type="range"] {
+            -webkit-appearance: none;
+            background: #190812;
+            border: 1px solid rgba(244, 63, 94, 0.25);
+            border-radius: 9999px;
+            height: 6px;
+        }
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            height: 16px;
+            width: 16px;
+            border-radius: 50%;
+            background: #E11D48;
+            cursor: pointer;
+            box-shadow: 0 0 14px #FB7185;
+            border: 2px solid #060204;
+            transition: transform 0.15s ease;
+        }
+        input[type="range"]::-webkit-slider-thumb:hover { transform: scale(1.25); }
+
+        .glow-marker-gold { filter: drop-shadow(0 0 8px #F59E0B) drop-shadow(0 0 16px #D97706); }
+        .glow-marker-cyan { filter: drop-shadow(0 0 8px #38BDF8) drop-shadow(0 0 16px #0284C7); }
+        .glow-marker-red { filter: drop-shadow(0 0 8px #E11D48) drop-shadow(0 0 18px #9F1239); }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col relative antialiased selection:bg-crimson-500 selection:text-white">
+
+    <div id="cursor-glow"></div>
+    <div id="cursor-dot"></div>
+
+    <!-- Fullscreen Intro Modal -->
+    <div id="intro-overlay" class="fixed inset-0 z-[100] flex flex-col justify-between p-8 overflow-hidden select-none bg-[#070204]/95 backdrop-blur-2xl transition-all duration-500">
+        <div class="flex justify-between items-center border-b border-rose-950/60 pb-4">
+            <div class="flex items-center space-x-3">
+                <div class="h-10 w-10 rounded-xl bg-crimson-500/15 border border-crimson-400 flex items-center justify-center text-crimson-400 font-mono font-black text-xl shadow-[0_0_18px_rgba(225,29,72,0.35)]">
+                    Mn
+                </div>
+                <div>
+                    <h1 class="font-mono text-sm font-bold tracking-wider text-slate-100 flex items-center gap-2">
+                        MANGANEX <span class="text-[10px] tracking-wider px-2 py-0.5 rounded bg-crimson-500/20 text-crimson-300 border border-crimson-400/40 font-mono">TACTICAL COMMAND</span>
+                    </h1>
+                    <p class="text-[10px] font-mono text-slate-400 uppercase tracking-wider"></p>
+                </div>
+            </div>
+            <div class="text-right font-mono text-xs">
+                <div class="text-crimson-400 font-bold tracking-wider">MINISTRY OF STEEL</div>
+                <div class="text-slate-400 text-[10px] tracking-wide">MOIL LIMITED CENTRAL CORRIDOR</div>
+            </div>
+        </div>
+
+        <div id="stage-emblem" class="flex flex-col items-center justify-center space-y-8 my-auto transition-all duration-700">
+            <div class="relative flex items-center justify-center">
+                <div class="absolute -inset-8 rounded-full bg-crimson-500/20 blur-3xl animate-pulse"></div>
+                <div class="h-36 w-36 rounded-2xl bg-gradient-to-br from-[#1C0813] via-[#0D0409] to-[#050103] border-2 border-crimson-400 flex flex-col items-center justify-center relative z-10 shadow-[0_0_40px_rgba(225,29,72,0.5)]">
+                    <span class="font-mono font-black text-6xl text-crimson-400 tracking-tighter drop-shadow-[0_0_25px_rgba(244,63,94,0.7)]">Mn</span>
+                    <span class="font-mono text-[9px] text-crimson-300 tracking-widest uppercase mt-1 font-bold">ATOMIC NO. 25</span>
+                </div>
+            </div>
+
+            <div class="text-center space-y-2">
+                <h2 class="text-2xl md:text-3xl font-mono font-bold tracking-wider text-slate-100">
+                    MANGANEX DIGITAL MINE TWIN
+                </h2>
+                <p class="text-xs font-mono text-slate-400 tracking-widest max-w-xl mx-auto uppercase">
+                    Tactical Space Remote Sensing & Real-Time Production Degradation Engine
+                </p>
+            </div>
+
+            <div class="w-80 md:w-96 space-y-2.5">
+                <div class="flex justify-between text-[11px] font-mono text-slate-400">
+                    <span id="load-status-text">Synchronizing Physical-to-Digital Twin Mirror...</span>
+                    <span id="load-timer-text" class="text-crimson-400 font-bold font-mono">10s</span>
+                </div>
+                <div class="w-full h-1.5 rounded-full bg-crimson-950 border border-crimson-900 overflow-hidden">
+                    <div id="load-progress-bar" class="h-full rounded-full bg-gradient-to-r from-crimson-500 to-crimson-300 w-0 transition-all duration-200"></div>
+                </div>
+            </div>
+
+            <button onclick="transitionToCarousel()" class="text-xs font-mono text-slate-400 hover:text-crimson-300 transition flex items-center gap-1.5 underline underline-offset-4 tracking-wider">
+                Skip to Capabilities Overview &rarr;
+            </button>
+        </div>
+
+        <div id="stage-carousel" class="hidden flex-col items-center justify-center space-y-6 my-auto max-w-4xl mx-auto w-full transition-all duration-700">
+            <div class="text-center space-y-1">
+                <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-crimson-500/10 border border-crimson-400/30 font-mono text-xs text-crimson-300">
+                    <span class="h-1.5 w-1.5 rounded-full bg-crimson-400 animate-ping"></span>
+                    <span>CORE ARCHITECTURE MODULES</span>
+                </div>
+                <h3 class="text-xl md:text-2xl font-mono font-bold text-slate-100">DIGITAL TWIN CAPABILITIES</h3>
+            </div>
+
+            <div class="w-full crimson-panel p-8 border border-crimson-400/30 relative min-h-[260px] flex flex-col justify-between">
+                <div id="slide-0" class="carousel-slide space-y-4">
+                    <div class="flex items-center gap-3">
+                        <div class="p-2.5 rounded-lg bg-crimson-500/10 border border-crimson-400/30 text-crimson-400">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" /></svg>
+                        </div>
+                        <div>
+                            <span class="text-xs font-mono text-crimson-400 uppercase font-bold tracking-wider">Module 1 / Dashboard 1</span>
+                            <h4 class="text-base font-mono font-bold text-slate-100">Command HUD & Multi-Spectral Web Signature</h4>
+                        </div>
+                    </div>
+                    <p class="text-xs md:text-sm text-slate-300 font-sans leading-relaxed">
+                        Instant tactical diagnostic tracking monthly quotas (25,000 T) against live XGBoost predictions, early shortfall risk envelopes, and a 6-axis Multi-Spectral Radar Web calculating Iron Oxide gossans (B4/B2) and thermal signatures.
+                    </p>
+                </div>
+
+                <div id="slide-1" class="carousel-slide hidden space-y-4">
+                    <div class="flex items-center gap-3">
+                        <div class="p-2.5 rounded-lg bg-crimson-500/10 border border-crimson-400/30 text-crimson-400">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                        </div>
+                        <div>
+                            <span class="text-xs font-mono text-crimson-400 uppercase font-bold tracking-wider">Module 2 / Dashboard 2</span>
+                            <h4 class="text-base font-mono font-bold text-slate-100">Space GIS & 3D Subsurface Stratigraphy</h4>
+                        </div>
+                    </div>
+                    <p class="text-xs md:text-sm text-slate-300 font-sans leading-relaxed">
+                        Ingests Sentinel-2 multi-spectral remote sensing over Indian manganese mining corridors (MP, MH, Odisha, Karnataka) across 450 glowing color-coded nodes, inverting surface anomalies to 3D borehole voxel models down to -250m.
+                    </p>
+                </div>
+
+                <div id="slide-2" class="carousel-slide hidden space-y-4">
+                    <div class="flex items-center gap-3">
+                        <div class="p-2.5 rounded-lg bg-crimson-500/10 border border-crimson-400/30 text-crimson-400">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" /></svg>
+                        </div>
+                        <div>
+                            <span class="text-xs font-mono text-crimson-400 uppercase font-bold tracking-wider">Module 3 / Dashboard 3</span>
+                            <h4 class="text-base font-mono font-bold text-slate-100">30-Day Degradation Trajectory & TreeSHAP Attribution</h4>
+                        </div>
+                    </div>
+                    <p class="text-xs md:text-sm text-slate-300 font-sans leading-relaxed">
+                        Proactive 30-day degradation curves using game-theoretic TreeSHAP attribution to isolate rainfall, bench slope resistance, and equipment maintenance bottlenecks.
+                    </p>
+                </div>
+
+                <div id="slide-3" class="carousel-slide hidden space-y-4">
+                    <div class="flex items-center gap-3">
+                        <div class="p-2.5 rounded-lg bg-crimson-500/10 border border-crimson-400/30 text-crimson-400">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" /></svg>
+                        </div>
+                        <div>
+                            <span class="text-xs font-mono text-crimson-400 uppercase font-bold tracking-wider">Module 4 & 5 / Closed Loop</span>
+                            <h4 class="text-base font-mono font-bold text-slate-100">What-If Digital Twin & Dynamic Haulage Re-Route</h4>
+                        </div>
+                    </div>
+                    <p class="text-xs md:text-sm text-slate-300 font-sans leading-relaxed">
+                        Real-time scenario testing with live financial ROI (₹ Crores saved) coupled with SciPy linear optimization for autonomous multi-pit dispatch to neighbor extraction zones (≤ 15 km).
+                    </p>
+                </div>
+            </div>
+
+            <div class="flex items-center justify-between w-full pt-2">
+                <div class="flex items-center space-x-3">
+                    <button onclick="prevSlide()" class="h-9 w-9 rounded-lg bg-crimson-950 border border-crimson-800 text-crimson-400 hover:text-white transition flex items-center justify-center font-mono">&larr;</button>
+                    <div class="flex items-center space-x-2">
+                        <span id="dot-0" onclick="goToSlide(0)" class="h-2 w-6 rounded-full bg-crimson-400 cursor-pointer transition-all"></span>
+                        <span id="dot-1" onclick="goToSlide(1)" class="h-2 w-2 rounded-full bg-crimson-900 cursor-pointer transition-all"></span>
+                        <span id="dot-2" onclick="goToSlide(2)" class="h-2 w-2 rounded-full bg-crimson-900 cursor-pointer transition-all"></span>
+                        <span id="dot-3" onclick="goToSlide(3)" class="h-2 w-2 rounded-full bg-crimson-900 cursor-pointer transition-all"></span>
+                    </div>
+                    <button onclick="nextSlide()" class="h-9 w-9 rounded-lg bg-crimson-950 border border-crimson-800 text-crimson-400 hover:text-white transition flex items-center justify-center font-mono">&rarr;</button>
+                </div>
+                <button onclick="enterTacticalSystem()" class="px-6 py-2.5 bg-gradient-to-r from-crimson-500 to-rose-600 hover:from-crimson-400 hover:to-rose-500 text-white font-mono font-bold text-xs tracking-wider rounded-lg shadow-[0_0_20px_rgba(225,29,72,0.45)] transition transform hover:-translate-y-0.5 flex items-center gap-2">
+                    <span>LAUNCH DIGITAL MINE TWIN</span>
+                    <span>&rarr;</span>
+                </button>
+            </div>
+        </div>
+
+        <div class="flex justify-between items-center border-t border-rose-950/60 pt-3 text-[11px] font-mono text-slate-400">
+            <div>DIGITAL TWIN PIPELINE: <strong class="text-crimson-400">ACTIVE (CLOSED-LOOP SOLVER)</strong></div>
+            <div>TELEMETRY STATUS: <strong class="text-emerald-400">MISSION READY (PRITHVI-EO 2.0)</strong></div>
+        </div>
+    </div>
+
+    <!-- Header Cockpit Bar -->
+    <header class="h-16 border-b border-crimson-900/60 bg-[#090306]/90 px-6 flex items-center justify-between backdrop-blur-2xl sticky top-0 z-50">
+        <div class="flex items-center space-x-4">
+            <div class="flex items-center space-x-3">
+                <div class="h-9 w-9 rounded-xl bg-crimson-500/15 border border-crimson-400/80 flex items-center justify-center text-crimson-400 font-mono font-bold text-base shadow-[0_0_15px_rgba(225,29,72,0.35)]">
+                    Mn
+                </div>
+                <div>
+                    <h1 class="font-mono text-sm font-bold tracking-wider text-slate-100 flex items-center gap-2">
+                        MANGANEX
+                    </h1>
+                    <p class="text-[9px] font-mono text-rose-300/60 tracking-wider">TACTICAL MINE COMMAND CENTER</p>
+                </div>
+            </div>
+
+           
+        </div>
+
+        <div class="flex items-center space-x-3 text-xs font-mono">
+            <button onclick="showIntroScreen()" class="px-3 py-1.5 rounded-lg bg-[#14060E] border border-rose-950 hover:border-crimson-400/40 text-slate-300 text-[11px] transition flex items-center gap-1.5">
+                <svg class="h-3 w-3 text-crimson-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                <span>OVERVIEW COVER</span>
+            </button>
+            <div class="px-3 py-1.5 rounded-lg bg-[#14060E] border border-rose-950 text-slate-300 text-[11px]">
+                Physical Face: <strong id="header-active-zone" class="text-crimson-400 font-mono font-bold">Zone-M100</strong>
+            </div>
+            <div id="sim-indicator" class="px-2.5 py-1.5 rounded-lg bg-crimson-500/10 border border-crimson-400/40 text-crimson-300 text-[11px] hidden font-mono animate-pulse">
+                SIMULATION ACTIVE
+            </div>
+            <div class="flex items-center space-x-2 text-slate-400 text-[11px] bg-[#14060E] border border-rose-950 px-3 py-1.5 rounded-lg">
+                <span class="h-2 w-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                <span>MIRROR: <strong class="text-emerald-400">REAL-TIME</strong></span>
+            </div>
+            
+        </div>
+    </header>
+
+    <!-- Main Command Body -->
+    <div class="flex-1 flex overflow-hidden relative z-10">
+        
+        <!-- Left Navigation Sidebar -->
+        <aside id="sidebar" class="w-64 border-r border-rose-950/60 bg-[#0A0307]/80 backdrop-blur-2xl p-4 flex flex-col justify-between shrink-0 select-none">
+            <div class="space-y-1">
+                <div class="text-[10px] font-mono text-slate-500 uppercase px-3 mb-3 tracking-widest flex items-center justify-between">
+                    <span>NAVIGATION MATRIX</span>
+                    <span class="text-crimson-400 text-xs">⌗</span>
+                </div>
+                
+                <button onclick="switchTab('tab-command')" id="side-tab-command" class="side-nav-btn active">
+                    <div class="flex items-center gap-2.5">
+                        <svg class="h-4 w-4 shrink-0 text-crimson-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+                        <div class="text-left">
+                            <div class="text-slate-100 font-bold">1. Command HUD</div>
+                            <div class="text-[9px] text-slate-500 font-sans">Overview & Control</div>
+                        </div>
+                    </div>
+                    <span class="text-xs">&gt;</span>
+                </button>
+                
+                <button onclick="switchTab('tab-gis')" id="side-tab-gis" class="side-nav-btn">
+                    <div class="flex items-center gap-2.5">
+                        <svg class="h-4 w-4 shrink-0 text-sky-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                        <div class="text-left">
+                            <div class="text-slate-100 font-bold">2. Ore GIS & 3D</div>
+                            <div class="text-[9px] text-slate-500 font-sans">Geospatial Intelligence</div>
+                        </div>
+                    </div>
+                    <span class="text-xs">&gt;</span>
+                </button>
+                
+                <button onclick="switchTab('tab-risk')" id="side-tab-risk" class="side-nav-btn">
+                    <div class="flex items-center gap-2.5">
+                        <svg class="h-4 w-4 shrink-0 text-rose-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/></svg>
+                        <div class="text-left">
+                            <div class="text-slate-100 font-bold">3. Risk & SHAP</div>
+                            <div class="text-[9px] text-slate-500 font-sans">AI Risk Analysis</div>
+                        </div>
+                    </div>
+                    <span class="text-xs">&gt;</span>
+                </button>
+                
+                <button onclick="switchTab('tab-recovery')" id="side-tab-recovery" class="side-nav-btn">
+                    <div class="flex items-center gap-2.5">
+                        <svg class="h-4 w-4 shrink-0 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"/></svg>
+                        <div class="text-left">
+                            <div class="text-slate-100 font-bold">4. Twin Simulation Lab</div>
+                            <div class="text-[9px] text-slate-500 font-sans">Scenario & Forecast</div>
+                        </div>
+                    </div>
+                    <span class="text-xs">&gt;</span>
+                </button>
+                
+                <button onclick="switchTab('tab-dispatch')" id="side-tab-dispatch" class="side-nav-btn">
+                    <div class="flex items-center gap-2.5">
+                        <svg class="h-4 w-4 shrink-0 text-amber-300" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"/></svg>
+                        <div class="text-left">
+                            <div class="text-slate-100 font-bold">5. Auto Dispatch</div>
+                            <div class="text-[9px] text-slate-500 font-sans">Smart Operations</div>
+                        </div>
+                    </div>
+                    <span class="text-xs">&gt;</span>
+                </button>
+            </div>
+
+            <div class="p-3.5 bg-[#12050B] rounded-xl border border-rose-950 font-mono text-[11px] space-y-2">
+                <div class="text-slate-400 font-bold uppercase tracking-wider text-[10px]">ORE GRADE INDEX</div>
+                <div class="flex items-center gap-2.5">
+                    <span class="h-2.5 w-2.5 rounded-full bg-crimson-400 shadow-[0_0_8px_#FB7185]"></span>
+                    <span class="text-slate-200">High Grade (&gt;35% Mn)</span>
+                </div>
+                <div class="flex items-center gap-2.5">
+                    <span class="h-2.5 w-2.5 rounded-full bg-sky-400 shadow-[0_0_8px_#38BDF8]"></span>
+                    <span class="text-slate-300">Medium (25-35% Mn)</span>
+                </div>
+                <div class="flex items-center gap-2.5">
+                    <span class="h-2.5 w-2.5 rounded-full bg-rose-700 shadow-[0_0_8px_#9F1239]"></span>
+                    <span class="text-slate-400">Low Grade (&lt;25% Mn)</span>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Dynamic Viewports -->
+        <main class="flex-1 p-6 overflow-y-auto">
+            
+            <!-- Tab 1: Command HUD -->
+            <div id="tab-command" class="tab-content grid grid-cols-12 gap-5">
+                <div class="col-span-3 crimson-panel p-5 tactical-border-pulse">
+                    <span class="text-[10px] font-mono tracking-wider text-slate-400 uppercase">TARGET PRODUCTION</span>
+                    <div id="card-target" class="text-3xl font-mono font-bold text-slate-100 mt-2">25,000 <span class="text-xs font-normal text-slate-400">T</span></div>
+                    <div class="text-[11px] font-mono text-slate-400 mt-2 flex items-center justify-between">
+                        <span>Planned Monthly Quota</span>
+                        <span class="text-emerald-400 text-xs font-bold">↗</span>
+                    </div>
+                </div>
+
+                <div class="col-span-3 crimson-panel p-5">
+                    <span class="text-[10px] font-mono tracking-wider text-slate-400 uppercase">TWIN PRODUCTION FORECAST</span>
+                    <div id="card-forecast" class="text-3xl font-mono font-bold text-crimson-400 mt-2">22,850 <span class="text-xs font-normal text-slate-400">T</span></div>
+                    <div id="card-shortfall" class="text-[11px] font-mono text-rose-400 mt-2">Expected Shortfall: -2,150 T</div>
+                </div>
+
+                <div class="col-span-3 crimson-panel p-5">
+                    <span class="text-[10px] font-mono tracking-wider text-slate-400 uppercase">SHORTFALL RISK LEVEL</span>
+                    <div id="card-risk" class="text-3xl font-mono font-bold text-rose-400 mt-2 flex items-center justify-between">
+                        <span>HIGH</span>
+                        <span class="h-7 w-7 rounded-full bg-crimson-500/20 border border-crimson-400/40 text-xs flex items-center justify-center text-crimson-300">!</span>
+                    </div>
+                    <div class="text-[11px] font-mono text-slate-400 mt-2">Weather Infiltration: <strong id="card-weather" class="text-crimson-300">MEDIUM</strong></div>
+                </div>
+
+                <div class="col-span-3 crimson-panel p-5">
+                    <span class="text-[10px] font-mono tracking-wider text-slate-400 uppercase">95% CONFIDENCE INTERVAL</span>
+                    <div id="card-ci" class="text-2xl font-mono font-bold text-emerald-400 mt-2">21,900 - 23,700 <span class="text-xs font-normal text-slate-400">T</span></div>
+                    <div class="text-[11px] font-mono text-slate-400 mt-2">Bayesian Residual Variance</div>
+                </div>
+
+                <div class="col-span-6 crimson-panel p-5 relative overflow-hidden">
+                    <div class="flex items-center justify-between border-b border-rose-950/60 pb-3 mb-2">
+                        <h2 class="text-xs font-mono text-crimson-300 font-bold tracking-wider uppercase">EQUIPMENT FLEET AVAILABILITY GAUGE</h2>
+                        <span class="text-[10px] font-mono text-slate-400">Live Calibration</span>
+                    </div>
+                    <div id="gauge-chart" class="h-64 w-full"></div>
+                </div>
+
+                <div class="col-span-6 crimson-panel p-5 relative overflow-hidden">
+                    <div class="flex items-center justify-between border-b border-rose-950/60 pb-3 mb-2">
+                        <h2 class="text-xs font-mono text-crimson-300 font-bold tracking-wider uppercase">ACTIVE PIT MULTI-SPECTRAL WEB SIGNATURE</h2>
+                        <span class="text-[10px] font-mono text-slate-400">Sentinel-2 Ingestion</span>
+                    </div>
+                    <div id="radar-chart" class="h-64 w-full"></div>
+                </div>
+            </div>
+
+            <!-- Tab 2: GIS & 3D Subsurface -->
+            <div id="tab-gis" class="tab-content hidden grid grid-cols-12 gap-5">
+                <div class="col-span-8 crimson-panel p-5">
+                    <div class="flex justify-between items-center mb-3">
+                        <h2 class="text-xs font-mono text-crimson-300 font-bold tracking-wider uppercase">
+                            SATELLITE ORE BELTS &bull; CENTRAL INDIA CORRIDORS
+                        </h2>
+                        <span id="map-cell-count" class="text-[11px] font-mono text-slate-400">Loaded 450 Target Nodes</span>
+                    </div>
+                    <div id="map" class="h-[420px] rounded-xl border border-rose-950 overflow-hidden shadow-inner"></div>
+                    <div class="mt-3.5 flex items-center justify-between">
+                        <div class="flex items-center gap-3">
+                            <span class="text-xs font-mono text-slate-400">Direct Zone Select:</span>
+                            <select id="select-zone" onchange="selectNewZone(this.value)" class="bg-[#14060E] border border-rose-950 rounded-lg px-3 py-1.5 text-xs font-mono text-crimson-300 focus:outline-none focus:border-crimson-400"></select>
+                        </div>
+                        <span class="text-[11px] font-mono text-emerald-400">Hover dot to inspect &bull; Click node to set active pit face</span>
+                    </div>
+                </div>
+
+                <div class="col-span-4 crimson-panel p-5 flex flex-col justify-between">
+                    <div>
+                        <h2 class="text-xs font-mono text-crimson-300 font-bold tracking-wider mb-4 uppercase border-b border-rose-950/60 pb-2">SURFACE & PIT TELEMETRY</h2>
+                        <div class="space-y-2.5 font-mono text-xs">
+                            <div class="bg-[#12050B] p-3 rounded-xl border border-rose-950">
+                                <div class="text-slate-400 text-[10px] uppercase">Selected Pit Face</div>
+                                <div id="gis-zone-id" class="text-base font-bold text-crimson-300">Zone-M100</div>
+                                <div id="gis-sector" class="text-[11px] text-slate-400">Balaghat Belt (MP)</div>
+                            </div>
+                            <div class="bg-[#12050B] p-3 rounded-xl border border-rose-950">
+                                <div class="text-slate-400 text-[10px] uppercase">Assayed Mn Ore Grade</div>
+                                <div id="gis-grade" class="text-base font-bold text-slate-100">42.5% Mn</div>
+                            </div>
+                            <div class="bg-[#12050B] p-3 rounded-xl border border-rose-950">
+                                <div class="text-slate-400 text-[10px] uppercase">Iron Oxide Index (B4/B2)</div>
+                                <div id="gis-iron" class="text-base font-bold text-slate-100">2.84</div>
+                            </div>
+                            <div class="bg-[#12050B] p-3 rounded-xl border border-rose-950">
+                                <div class="text-slate-400 text-[10px] uppercase">Pit Wall Slope Angle</div>
+                                <div id="gis-slope" class="text-base font-bold text-slate-100">14.2°</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="p-3 bg-crimson-500/10 border border-crimson-400/30 rounded-xl text-[11px] font-mono text-crimson-300 mt-4">
+                        Surface gossan confirmed. 3D Sub-surface lithology generated via borehole inversion.
+                    </div>
+                </div>
+
+                <div class="col-span-12 crimson-panel p-5">
+                    <h2 class="text-xs font-mono text-crimson-300 font-bold tracking-wider uppercase mb-1">3D SUB-SURFACE VOXEL ORE BODY (DEPTH: 0M TO -250M)</h2>
+                    <p class="text-[11px] font-mono text-slate-400 mb-3">Interactive Borehole Vein Geometry Slicing Below Satellite Gossan Cap</p>
+                    <div id="subsurface-3d-chart" class="h-96 w-full"></div>
+                </div>
+            </div>
+
+            <!-- Tab 3: Risk & SHAP -->
+            <div id="tab-risk" class="tab-content hidden grid grid-cols-12 gap-5">
+                <div class="col-span-7 crimson-panel p-5">
+                    <div class="flex justify-between items-center mb-2">
+                        <h2 class="text-xs font-mono text-crimson-300 font-bold tracking-wider uppercase">
+                            REAL-TIME SHIFT EXTRACTION TELEMETRY (ACTUAL VS. PREDICTED)
+                        </h2>
+                        <span id="risk-curve-status" class="px-2.5 py-0.5 rounded text-[10px] font-mono font-bold bg-crimson-500/20 text-crimson-300 border border-crimson-400">DEFICIT GROWING</span>
+                    </div>
+                    <p class="text-[11px] font-mono text-slate-400 mb-3">
+                        Sequential extraction trajectory: <span class="text-[#1F77B4] font-bold">Actual Mined Value</span> (continuous SQLite shift logs) vs. <span class="text-[#FF7F0E] font-bold">Predicted Value</span> (XGBoost degradation model). Dynamically scales with simulation quota targets.
+                    </p>
+                    <div id="trajectory-chart" class="h-80 w-full"></div>
+                </div>
+
+                <div class="col-span-5 crimson-panel p-5 flex flex-col justify-between">
+                    <div>
+                        <div class="flex justify-between items-center mb-2">
+                            <h2 class="text-xs font-mono text-crimson-300 font-bold tracking-wider uppercase">
+                                TREESHAP ROOT-CAUSE DRIVERS
+                            </h2>
+                            <span class="text-[10px] font-mono text-slate-400">Shapley Values (%)</span>
+                        </div>
+                        <p class="text-[11px] font-mono text-slate-400 mb-3">
+                            Machine learning attribution ranking operational shortfall drivers.
+                        </p>
+                        <div id="shap-chart" class="h-64 w-full"></div>
+                    </div>
+
+                    <div class="mt-4 p-3.5 rounded-xl bg-[#12050B] border border-rose-950 text-xs font-mono space-y-1.5">
+                        <div class="text-crimson-400 font-bold flex items-center gap-1.5 uppercase text-[11px]">
+                            Primary Bottleneck Diagnostic:
+                        </div>
+                        <p id="shap-summary-text" class="text-slate-300 leading-relaxed text-[11.5px]">
+                            Analyzing operational parameters...
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tab 4: Twin Simulation Lab -->
+            <div id="tab-recovery" class="tab-content hidden grid grid-cols-12 gap-5">
+                <div class="col-span-4 crimson-panel p-5 space-y-4">
+                    <div class="flex justify-between items-center border-b border-rose-950/60 pb-3">
+                        <h2 class="text-xs font-mono text-crimson-300 font-bold tracking-wider uppercase">
+                            WHAT-IF TWIN CONTROLS
+                        </h2>
+                        <button onclick="resetToZoneBaseline()" class="px-2.5 py-1 rounded-lg bg-crimson-500/10 hover:bg-crimson-500/20 text-crimson-300 border border-crimson-400/30 text-[10px] font-mono transition">
+                            RESET BASELINE
+                        </button>
+                    </div>
+
+                    <div class="p-3 bg-[#12050B] rounded-xl border border-rose-950 font-mono text-[11px] space-y-1">
+                        <div class="flex justify-between text-slate-400">
+                            <span>Physical Face:</span>
+                            <strong id="rec-zone-label" class="text-crimson-300">Zone-M100</strong>
+                        </div>
+                        <div class="flex justify-between text-slate-400">
+                            <span>Twin Telemetry:</span>
+                            <span class="text-emerald-400 font-bold">SYNCHRONIZED (PRITHVI-EO)</span>
+                        </div>
+                    </div>
+
+                    <div class="space-y-1.5">
+                        <div class="flex justify-between text-xs font-mono text-slate-300">
+                            <span>Pit Rainfall Infiltration</span>
+                            <span id="lbl-rain" class="text-crimson-400 font-bold">42 mm</span>
+                        </div>
+                        <input type="range" min="0" max="120" value="42" id="slider-rain" oninput="onSliderChange()" class="w-full">
+                    </div>
+
+                    <div class="space-y-1.5">
+                        <div class="flex justify-between text-xs font-mono text-slate-300">
+                            <span>Fleet Availability</span>
+                            <span id="lbl-avail" class="text-crimson-400 font-bold">78 %</span>
+                        </div>
+                        <input type="range" min="40" max="100" value="78" id="slider-avail" oninput="onSliderChange()" class="w-full">
+                    </div>
+
+                    <div class="space-y-1.5">
+                        <div class="flex justify-between text-xs font-mono text-slate-300">
+                            <span>Blast Delay Window</span>
+                            <span id="lbl-blast" class="text-crimson-400 font-bold">3.0 hrs</span>
+                        </div>
+                        <input type="range" min="0" max="10" step="0.5" value="3.0" id="slider-blast" oninput="onSliderChange()" class="w-full">
+                    </div>
+
+                    <div class="space-y-1.5">
+                        <div class="flex justify-between text-xs font-mono text-slate-300">
+                            <span>Stockpile Draw Buffer</span>
+                            <span id="lbl-stock" class="text-crimson-400 font-bold">4,000 T</span>
+                        </div>
+                        <input type="range" min="0" max="8000" step="250" value="4000" id="slider-stock" oninput="onSliderChange()" class="w-full">
+                    </div>
+                </div>
+
+                <div class="col-span-8 crimson-panel p-5">
+                    <h2 class="text-xs font-mono text-crimson-300 font-bold tracking-wider mb-4 uppercase border-b border-rose-950/60 pb-2">TWIN FINANCIAL IMPACT & COST AVOIDANCE</h2>
+                    <div class="grid grid-cols-3 gap-4 mb-6">
+                        <div class="bg-[#12050B] p-4 rounded-xl border border-rose-950">
+                            <span class="text-[10px] font-mono text-slate-400 uppercase">Recovered Ore Value</span>
+                            <div id="rec-roi-val" class="text-2xl font-mono font-bold text-crimson-400 mt-1">₹ 3.34 Cr</div>
+                            <div class="text-[11px] font-mono text-emerald-400 mt-1">Revenue Preserved</div>
+                        </div>
+                        <div class="bg-[#12050B] p-4 rounded-xl border border-rose-950">
+                            <span class="text-[10px] font-mono text-slate-400 uppercase">Fleet Fuel Saved</span>
+                            <div id="rec-diesel" class="text-2xl font-mono font-bold text-slate-100 mt-1">₹ 8.7 L</div>
+                            <div class="text-[11px] font-mono text-slate-400 mt-1">Route Optimization</div>
+                        </div>
+                        <div class="bg-[#12050B] p-4 rounded-xl border border-rose-950">
+                            <span class="text-[10px] font-mono text-slate-400 uppercase">Customer SLA Penalty</span>
+                            <div class="text-2xl font-mono font-bold text-emerald-400 mt-1">₹ 0.00</div>
+                            <div class="text-[11px] font-mono text-slate-400 mt-1">Zero Shortfall Penalty</div>
+                        </div>
+                    </div>
+
+                    <h2 class="text-xs font-mono text-crimson-300 font-bold tracking-wider mb-3 uppercase">PRESCRIPTIVE DIGITAL TWIN DIRECTIVES (SOP)</h2>
+                    <div id="recovery-directives" class="space-y-2"></div>
+                </div>
+            </div>
+
+            <!-- Tab 5: Auto Dispatch -->
+            <div id="tab-dispatch" class="tab-content hidden grid grid-cols-12 gap-5">
+                <div class="col-span-4 crimson-panel p-5 space-y-4">
+                    <div class="flex justify-between items-center border-b border-rose-950/60 pb-3">
+                        <h2 class="text-xs font-mono text-crimson-300 font-bold tracking-wider uppercase">
+                            REAL-TIME QUOTA SEEKER
+                        </h2>
+                        <button onclick="resetToZoneBaseline()" class="px-2.5 py-1 rounded-lg bg-crimson-500/10 hover:bg-crimson-500/20 text-crimson-300 border border-crimson-400/30 text-[10px] font-mono transition">
+                            RESET BASELINE
+                        </button>
+                    </div>
+
+                    <p class="text-xs font-mono text-slate-400">
+                        Evaluating Pit Face: <strong id="dispatch-target-zone-label" class="text-crimson-300 font-bold">Zone-M100</strong>
+                    </p>
+                    
+                    <div>
+                        <label class="text-xs font-mono text-slate-300 block mb-1">Target Production Quota (Tons):</label>
+                        <input 
+                            type="number" 
+                            id="input-target" 
+                            value="25000" 
+                            min="1" 
+                            step="50" 
+                            oninput="onTargetInputChange(this.value)" 
+                            class="w-full bg-[#14060E] border border-rose-950 rounded-xl p-2.5 text-base font-mono font-bold text-crimson-300 focus:border-crimson-400 focus:outline-none shadow-inner"
+                        >
+                        <span class="text-[10px] font-mono text-slate-400 mt-1 block">Dynamic multi-pit solver evaluates live haul routes</span>
+                    </div>
+
+                    <div class="p-4 bg-[#12050B] rounded-xl border border-rose-950 text-xs font-mono text-slate-300 space-y-2.5">
+                        <div class="flex justify-between items-center">
+                            <span class="text-slate-400">Active Pit Safe Cap:</span>
+                            <strong id="dispatch-cap" class="text-slate-100 text-sm">18,200 T</strong>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <span class="text-slate-400">Twin Simulated State:</span>
+                            <span id="dispatch-env-state" class="text-crimson-400 font-mono">42mm Rain | 78% Fleet</span>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <span class="text-slate-400">Quota Status:</span>
+                            <span id="dispatch-status-badge" class="px-2 py-0.5 rounded font-bold text-[10px] bg-crimson-500/20 text-crimson-300 border border-crimson-400">SHORTFALL DEFICIT</span>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <span class="text-slate-400">Guaranteed Quota Met:</span>
+                            <strong id="dispatch-guaranteed" class="text-emerald-400 text-sm">100% (25,000 T)</strong>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-span-8 space-y-5">
+                    <div class="crimson-panel p-4 border-l-4 border-crimson-400">
+                        <h3 class="text-[10px] font-mono text-slate-400 uppercase tracking-wider mb-1">AI EXECUTIVE FEASIBILITY ADVISORY</h3>
+                        <p id="dispatch-advisory-text" class="text-xs font-mono text-slate-200 leading-relaxed">
+                            Evaluating feasibility...
+                        </p>
+                    </div>
+
+                    <div class="crimson-panel p-5">
+                        <div class="flex justify-between items-center mb-4 border-b border-rose-950/60 pb-3">
+                            <h2 class="text-xs font-mono text-crimson-300 font-bold tracking-wider uppercase">
+                                OPTIMIZED MULTI-PIT HAULAGE DISPATCH SCHEDULE
+                            </h2>
+                            <span class="text-[11px] font-mono text-emerald-400">95% Bayesian Confidence</span>
+                        </div>
+                        
+                        <div id="dispatch-routes" class="space-y-3 font-mono text-xs"></div>
+                    </div>
+                </div>
+            </div>
+
+        </main>
+    </div>
+
+    <!-- Bottom Status Bar -->
+    <footer class="h-14 border-t border-rose-950/60 bg-[#090306]/95 px-6 flex items-center justify-between font-mono text-xs z-30">
+        <div class="flex items-center space-x-6">
+            <div class="flex items-center space-x-2">
+                <span class="text-slate-400 text-[10px]">SYSTEM STATUS:</span>
+                <span class="flex items-center gap-1.5 text-emerald-400 text-[11px] font-bold">
+                    <span class="h-2 w-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                    All Systems Operational
+                </span>
+            </div>
+            
+            <div class="hidden lg:flex items-center space-x-2 text-slate-400 text-[11px]">
+                <span>DATA SOURCE:</span>
+                <span class="text-crimson-400">Sentinel-2 </span>
+            </div>
+        </div>
+
+        <div class="flex items-center space-x-5">
+            <div class="text-slate-400 text-[11px]">
+                UPTIME: <span class="text-slate-200 font-bold">99.98%</span>
+            </div>
+            <div class="relative w-8 h-8 rounded-full border border-crimson-500/40 bg-crimson-950/40 flex items-center justify-center overflow-hidden">
+                <div class="absolute w-full h-full border border-crimson-500/20 rounded-full"></div>
+                <div class="absolute w-1/2 h-[1px] bg-gradient-to-r from-transparent to-crimson-400 radar-sweep-line"></div>
+                <div class="h-1 w-1 bg-crimson-400 rounded-full shadow-[0_0_6px_#FB7185]"></div>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        let currentZone = "Zone-M100";
+        let mapInstance = null;
+        let allZones = [];
+        let mapMarkers = {};
+
+        let isCustomSimActive = false;
+        let simState = {
+            rainfall: 42.0,
+            fleetAvail: 78.0,
+            blastDelay: 3.0,
+            stockpile: 4000.0,
+            targetQuota: 25000.0
+        };
+
+        // Cache for 108 continuous shift points
+        window.continuousShifts = null;
+
+        // Offline Standalone Fallback Dataset
+        const fallbackTelemetry = {
+            ranked_zones: [
+                { cell_id: "Zone-M100", sector_name: "Balaghat Belt (MP)", ore_grade_pct: 42.5, latitude: 21.80, longitude: 80.18, iron_oxide_index: 2.84, clay_alteration_index: 1.95, elevation_m: 380, lst_celsius: 32.4, slope_deg: 14.2, soil_moisture_pct: 38.0, fault_distance_km: 1.2, prospectivity_score: 88 },
+                { cell_id: "Zone-M521", sector_name: "Bhandara Corridor (MH)", ore_grade_pct: 46.5, latitude: 21.35, longitude: 79.65, iron_oxide_index: 3.43, clay_alteration_index: 2.10, elevation_m: 410, lst_celsius: 34.1, slope_deg: 12.9, soil_moisture_pct: 32.0, fault_distance_km: 2.4, prospectivity_score: 93 },
+                { cell_id: "Zone-M304", sector_name: "Dongri Buzurg (MH)", ore_grade_pct: 33.2, latitude: 21.52, longitude: 79.72, iron_oxide_index: 2.15, clay_alteration_index: 1.70, elevation_m: 340, lst_celsius: 30.5, slope_deg: 16.8, soil_moisture_pct: 42.0, fault_distance_km: 3.1, prospectivity_score: 74 },
+                { cell_id: "Zone-M812", sector_name: "Chikla Pit (MH)", ore_grade_pct: 22.8, latitude: 21.55, longitude: 79.80, iron_oxide_index: 1.80, clay_alteration_index: 1.40, elevation_m: 310, lst_celsius: 29.0, slope_deg: 19.5, soil_moisture_pct: 49.0, fault_distance_km: 4.8, prospectivity_score: 58 }
+            ]
+        };
+
+        // Smooth Mouse Follower Loop
+        let mouseX = window.innerWidth / 2, mouseY = window.innerHeight / 2;
+        let glowX = mouseX, glowY = mouseY;
+        const cursorGlow = document.getElementById('cursor-glow');
+        const cursorDot = document.getElementById('cursor-dot');
+
+        window.addEventListener('mousemove', (e) => {
+            mouseX = e.clientX;
+            mouseY = e.clientY;
+            cursorDot.style.left = mouseX + 'px';
+            cursorDot.style.top = mouseY + 'px';
+        });
+
+        function animateCursor() {
+            glowX += (mouseX - glowX) * 0.12;
+            glowY += (mouseY - glowY) * 0.12;
+            cursorGlow.style.left = glowX + 'px';
+            cursorGlow.style.top = glowY + 'px';
+            requestAnimationFrame(animateCursor);
+        }
+        animateCursor();
+
+        // Safe Parallax Card Tilt
+        function attachCardTilts() {
+            document.querySelectorAll('.crimson-panel').forEach(card => {
+                card.onmousemove = (e) => {
+                    const rect = card.getBoundingClientRect();
+                    if (rect.width === 0 || rect.height === 0) return;
+                    const x = e.clientX - rect.left - (rect.width / 2);
+                    const y = e.clientY - rect.top - (rect.height / 2);
+                    const rotX = (-y / (rect.height / 2)) * 5.0;
+                    const rotY = (x / (rect.width / 2)) * 5.0;
+                    card.style.transform = `perspective(1000px) rotateX(${rotX}deg) rotateY(${rotY}deg) translateZ(3px)`;
+                };
+                card.onmouseleave = () => {
+                    card.style.transform = 'perspective(1000px) rotateX(0deg) rotateY(0deg) translateZ(0px)';
+                };
+            });
+        }
+
+        // Carousel Slider Management
+        let currentSlideIndex = 0;
+        const totalSlides = 4;
+        function updateSlideView() {
+            for (let i = 0; i < totalSlides; i++) {
+                const el = document.getElementById(`slide-${i}`);
+                const dot = document.getElementById(`dot-${i}`);
+                if (i === currentSlideIndex) {
+                    el.classList.remove('hidden');
+                    dot.classList.add('w-6', 'bg-crimson-400');
+                    dot.classList.remove('w-2', 'bg-crimson-900');
+                } else {
+                    el.classList.add('hidden');
+                    dot.classList.remove('w-6', 'bg-crimson-400');
+                    dot.classList.add('w-2', 'bg-crimson-900');
+                }
+            }
+        }
+        function nextSlide() { currentSlideIndex = (currentSlideIndex + 1) % totalSlides; updateSlideView(); }
+        function prevSlide() { currentSlideIndex = (currentSlideIndex - 1 + totalSlides) % totalSlides; updateSlideView(); }
+        function goToSlide(idx) { currentSlideIndex = idx; updateSlideView(); }
+
+        let loadingTimer = null;
+        function startSplashCountdown() {
+            const progressBar = document.getElementById('load-progress-bar');
+            const timerText = document.getElementById('load-timer-text');
+            const statusText = document.getElementById('load-status-text');
+            const statusStages = [
+                "Synchronizing Physical-to-Digital Twin Mirror...",
+                "Ingesting Sentinel-2 Spectral Gossans...",
+                "Calibrating XGBoost Degradation Engine...",
+                "Generating 3D Voxel Borehole Model...",
+                "Establishing Digital Twin Dispatch Link..."
+            ];
+
+            let elapsed = 0;
+            loadingTimer = setInterval(() => {
+                elapsed += 0.2;
+                const remaining = Math.max(0, 10 - Math.floor(elapsed));
+                progressBar.style.width = Math.min(100, (elapsed / 10) * 100) + "%";
+                timerText.innerText = Math.ceil(remaining) + "s";
+                const stageIdx = Math.min(statusStages.length - 1, Math.floor((elapsed / 10) * statusStages.length));
+                statusText.innerText = statusStages[stageIdx];
+
+                if (elapsed >= 10) {
+                    clearInterval(loadingTimer);
+                    transitionToCarousel();
+                }
+            }, 200);
+        }
+
+        function transitionToCarousel() {
+            clearInterval(loadingTimer);
+            const stageEmblem = document.getElementById('stage-emblem');
+            const stageCarousel = document.getElementById('stage-carousel');
+            stageEmblem.style.opacity = '0';
+            setTimeout(() => {
+                stageEmblem.classList.add('hidden');
+                stageCarousel.classList.remove('hidden');
+                stageCarousel.style.opacity = '1';
+                updateSlideView();
+            }, 400);
+        }
+
+        function enterTacticalSystem() {
+            const overlay = document.getElementById('intro-overlay');
+            overlay.style.opacity = '0';
+            setTimeout(() => {
+                overlay.style.visibility = 'hidden';
+                window.dispatchEvent(new Event('resize'));
+                attachCardTilts();
+            }, 500);
+        }
+
+        function showIntroScreen() {
+            const overlay = document.getElementById('intro-overlay');
+            const stageEmblem = document.getElementById('stage-emblem');
+            const stageCarousel = document.getElementById('stage-carousel');
+            overlay.style.visibility = 'visible';
+            overlay.style.opacity = '1';
+            stageEmblem.classList.add('hidden');
+            stageCarousel.classList.remove('hidden');
+            stageCarousel.style.opacity = '1';
+            updateSlideView();
+        }
+
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+            document.getElementById(tabId).classList.remove('hidden');
+            
+            document.querySelectorAll('.side-nav-btn').forEach(btn => btn.classList.remove('active'));
+            const sideBtn = document.getElementById('side-' + tabId);
+            if (sideBtn) sideBtn.classList.add('active');
+            
+            setTimeout(() => {
+                if (tabId === 'tab-gis' && mapInstance) {
+                    mapInstance.invalidateSize(); 
+                    Plotly.Plots.resize('subsurface-3d-chart');
+                } else if (tabId === 'tab-command') {
+                    Plotly.Plots.resize('gauge-chart');
+                    Plotly.Plots.resize('radar-chart');
+                } else if (tabId === 'tab-risk') {
+                    Plotly.Plots.resize('trajectory-chart');
+                    Plotly.Plots.resize('shap-chart');
+                }
+                attachCardTilts();
+            }, 180);
+        }
+
+        // Domain-Aware Standard Operating Procedure Directive Engine
+        function generateMiningSOPDirectives(telemetry, sim) {
+            const zoneId = telemetry.cell_id || "Zone-M100";
+            const sector = telemetry.sector_name || "Balaghat Belt";
+            const grade = Number(telemetry.ore_grade_pct) || 35.0;
+            const slope = Number(telemetry.slope_deg) || 14.0;
+            const rain = Number(sim.rainfall) || 0.0;
+            const fleetAvail = Number(sim.fleetAvail) || 80.0;
+            const blastDelay = Number(sim.blastDelay) || 2.0;
+            const stockDraw = Number(sim.stockpile) || 4000.0;
+
+            const directives = [];
+
+            // 1. Geotechnical & Haulage Fleet Dispatch (DGMS Compliant)
+            if (slope > 18.0) {
+                directives.push(
+                    `<strong>1. DGMS BENCH STABILITY ORDER:</strong> Pit wall slope at ${zoneId} is critical (${slope.toFixed(1)}° > 18° safe limit). Mandate single-lane 35T rear dumpers with speed restricted to ≤ 12 km/h. Exclude 50T multi-axle tippers from lower ramps.`
+                );
+            } else if (rain > 50.0) {
+                directives.push(
+                    `<strong>1. HAUL ROAD TRACTION DIRECTIVE:</strong> High precipitation (${rain} mm) has increased tire rolling resistance by ~${Math.round(rain * 0.28)}%. Deploy 2x motor graders for continuous gravel-capping on primary ramp of ${zoneId}. Dispatch 4x auxiliary 35T haul trucks to maintain target cycle turnaround.`
+                );
+            } else {
+                directives.push(
+                    `<strong>1. EXTRACTION FLEET ASSIGNMENT:</strong> Operating slope (${slope.toFixed(1)}°) is stable under DGMS norms. Assign 1x 3.2m³ hydraulic shovel matched with 6x 35T dumpers directly to active face [${zoneId}] to maximize digging efficiency.`
+                );
+            }
+
+            // 2. Blast Clearance Window & Weather Evasion
+            if (rain > 40.0) {
+                const advanceMins = Math.min(120, Math.round(rain * 1.5));
+                directives.push(
+                    `<strong>2. CONTROLLED BLAST TIMING:</strong> Doppler NWP models show rain cells approaching ${sector}. Advance scheduled face blast window by ${advanceMins} minutes to prevent emulsion explosive wash-out and waterlogged mucking delays.`
+                );
+            } else if (blastDelay > 3.0) {
+                directives.push(
+                    `<strong>2. BLAST CLEARANCE DRILL:</strong> Excessive blast clearance delay (${blastDelay.toFixed(1)} hrs) detected. Enforce streamlined 35-minute cordon evacuation protocol across adjacent benches to return shovel operators to mucking operations promptly.`
+                );
+            } else {
+                directives.push(
+                    `<strong>2. BLAST BURDEN CONFIGURATION:</strong> Maintain nominal 3.5m burden × 4.2m spacing drill pattern. Implement sequential non-electric (NONEL) shock-tube initiation to minimize bench back-break vibrations.`
+                );
+            }
+
+            // 3. Ore Beneficiation & Blending (Refinery Grade Match)
+            const targetRefineryGrade = 38.0;
+            if (grade < targetRefineryGrade) {
+                const deficit = (targetRefineryGrade - grade).toFixed(1);
+                directives.push(
+                    `<strong>3. GRADE BLENDING REQUIREMENT:</strong> Raw extraction feed (${grade.toFixed(1)}% Mn) is below customer specification (${targetRefineryGrade}% Mn). Command blending plant to draw ${stockDraw.toLocaleString()} T from High-Grade Stockpile Yard-A to maintain a steady 38% refinery feed.`
+                );
+            } else {
+                const surplus = (grade - targetRefineryGrade).toFixed(1);
+                directives.push(
+                    `<strong>3. DIRECT DISPATCH QUALIFICATION:</strong> High-grade ore identified (${grade.toFixed(1)}% Mn, +${surplus}% surplus). Authorize direct-to-rake dispatch to South Eastern Railway siding without secondary washing, cutting transit handling cost.`
+                );
+            }
+
+            // 4. Equipment Uptime & Maintenance Scheduling
+            if (fleetAvail < 75.0) {
+                directives.push(
+                    `<strong>4. MOBILE PIT-STOP SERVICING:</strong> Fleet availability is severely degraded (${fleetAvail.toFixed(0)}%). Mobilize the on-site mobile lube van to perform rapid 30-minute preventive maintenance on haul dumpers during the shift changeover.`
+                );
+            } else {
+                directives.push(
+                    `<strong>4. PREVENTIVE HEALTH CHECK:</strong> Mechanical availability nominal (${fleetAvail.toFixed(0)}%). Schedule scheduled hydraulic hose and track-pad ultrasonic testing during the scheduled 14:00 blasting clearance lull.`
+                );
+            }
+
+            return directives;
+        }
+
+        async function initApp() {
+            startSplashCountdown();
+
+            let data;
+            try {
+                const res = await fetch('/api/initial-telemetry');
+                if (!res.ok) throw new Error("Offline mode");
+                data = await res.json();
+            } catch (err) {
+                data = fallbackTelemetry;
+            }
+
+            allZones = data.ranked_zones || [];
+            if (allZones.length > 0) {
+                currentZone = allZones[0].cell_id;
+                const sel = document.getElementById('select-zone');
+                sel.innerHTML = '';
+                allZones.forEach(z => {
+                    sel.innerHTML += `<option value="${z.cell_id}">${z.cell_id} - ${z.sector_name} (${z.ore_grade_pct.toFixed(1)}% Mn)</option>`;
+                });
+                initMap(allZones);
+                syncZoneDefaults(allZones[0]);
+                renderSubsurface3D(allZones[0]);
+            }
+            
+            await fetchShiftSeries(currentZone);
+            runLiveSimulation();
+        }
+
+        function syncZoneDefaults(zoneObj) {
+            if (!isCustomSimActive) {
+                const derivedRain = Math.round(zoneObj.soil_moisture_pct * 1.1);
+                const derivedAvail = Math.round(Math.max(60, 92 - (zoneObj.slope_deg * 0.8) - (zoneObj.fault_distance_km * 0.5)));
+                const derivedBlast = Number((2.0 + (zoneObj.slope_deg / 10.0)).toFixed(1));
+
+                simState.rainfall = derivedRain;
+                simState.fleetAvail = derivedAvail;
+                simState.blastDelay = derivedBlast;
+
+                document.getElementById('slider-rain').value = derivedRain;
+                document.getElementById('slider-avail').value = derivedAvail;
+                document.getElementById('slider-blast').value = derivedBlast;
+                
+                document.getElementById('lbl-rain').innerText = derivedRain + " mm";
+                document.getElementById('lbl-avail').innerText = derivedAvail + " %";
+                document.getElementById('lbl-blast').innerText = derivedBlast.toFixed(1) + " hrs";
+            }
+            document.getElementById('rec-zone-label').innerText = zoneObj.cell_id;
+        }
+
+        function resetToZoneBaseline() {
+            isCustomSimActive = false;
+            document.getElementById('sim-indicator').classList.add('hidden');
+            const currentObj = allZones.find(z => z.cell_id === currentZone) || allZones[0];
+            syncZoneDefaults(currentObj);
+            renderSubsurface3D(currentObj);
+            fetchShiftSeries(currentZone);
+            runLiveSimulation();
+        }
+
+        function onSliderChange() {
+            isCustomSimActive = true;
+            document.getElementById('sim-indicator').classList.remove('hidden');
+            simState.rainfall = parseFloat(document.getElementById('slider-rain').value);
+            simState.fleetAvail = parseFloat(document.getElementById('slider-avail').value);
+            simState.blastDelay = parseFloat(document.getElementById('slider-blast').value);
+            simState.stockpile = parseFloat(document.getElementById('slider-stock').value);
+
+            document.getElementById('lbl-rain').innerText = simState.rainfall + " mm";
+            document.getElementById('lbl-avail').innerText = simState.fleetAvail + " %";
+            document.getElementById('lbl-blast').innerText = simState.blastDelay.toFixed(1) + " hrs";
+            document.getElementById('lbl-stock').innerText = simState.stockpile.toLocaleString() + " T";
+
+            runLiveSimulation();
+        }
+
+        async function fetchShiftSeries(zoneId) {
+            try {
+                const res = await fetch(`/api/db/continuous-shifts/${zoneId}`);
+                if (res.ok) {
+                    const data = await res.json();
+                    window.continuousShifts = data.shifts;
+                    renderTrajectoryChart(simState.targetQuota, window.continuousShifts);
+                } else {
+                    renderTrajectoryChart(simState.targetQuota, null);
+                }
+            } catch (e) {
+                renderTrajectoryChart(simState.targetQuota, null);
+            }
+        }
+
+        function selectNewZone(zoneId) {
+            currentZone = zoneId;
+            document.getElementById('select-zone').value = zoneId;
+            document.getElementById('header-active-zone').innerText = zoneId;
+            document.getElementById('dispatch-target-zone-label').innerText = zoneId;
+            
+            const matchObj = allZones.find(z => z.cell_id === zoneId);
+            if (matchObj) {
+                syncZoneDefaults(matchObj);
+                renderSubsurface3D(matchObj);
+            }
+
+            Object.keys(mapMarkers).forEach(id => {
+                const item = mapMarkers[id];
+                if (id === zoneId) {
+                    item.marker.setStyle({ color: '#FFFFFF', weight: 4, radius: 10 });
+                    item.marker.openPopup();
+                } else {
+                    item.marker.setStyle({ color: item.baseColor, weight: 1.5, radius: 6 });
+                }
+            });
+
+            fetchShiftSeries(zoneId);
+            runLiveSimulation();
+        }
+
+        function initMap(zones) {
+            if (mapInstance) return;
+            mapInstance = L.map('map').setView([21.5, 80.0], 6);
+            
+            L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+                attribution: 'Esri Satellite'
+            }).addTo(mapInstance);
+
+            L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}', {
+                attribution: 'Esri Boundaries'
+            }).addTo(mapInstance);
+
+            zones.forEach((z) => {
+                let dotColor = z.ore_grade_pct >= 35.0 ? '#FB7185' : (z.ore_grade_pct >= 25.0 ? '#38BDF8' : '#9F1239');
+                const isSelected = z.cell_id === currentZone;
+                const marker = L.circleMarker([z.latitude, z.longitude], {
+                    radius: isSelected ? 10 : 6,
+                    fillColor: dotColor,
+                    color: isSelected ? '#FFFFFF' : dotColor,
+                    weight: isSelected ? 3.5 : 1.5,
+                    fillOpacity: 0.95
+                }).addTo(mapInstance);
+
+                marker.bindTooltip(`
+                    <div style="font-family: monospace;">
+                        <strong style="color: #FB7185;">${z.cell_id}</strong><br>
+                        <span>${z.sector_name}</span><br>
+                        Grade: <strong style="color:${dotColor}">${z.ore_grade_pct.toFixed(1)}% Mn</strong>
+                    </div>
+                `, { className: 'leaflet-tooltip-tactical', direction: 'top', sticky: true });
+
+                marker.on('click', () => selectNewZone(z.cell_id));
+                mapMarkers[z.cell_id] = { marker: marker, baseColor: dotColor };
+            });
+            document.getElementById('map-cell-count').innerText = `Active Grid: ${zones.length} Targets Across MP, MH, OD, KA`;
+        }
+
+        // Live Quota Input Rescaling
+        let debounceTimer;
+        function onTargetInputChange(val) {
+            clearTimeout(debounceTimer);
+            debounceTimer = setTimeout(() => {
+                const parsedVal = parseFloat(val);
+                simState.targetQuota = (!isNaN(parsedVal) && parsedVal > 0) ? parsedVal : 1.0;
+                
+                // Immediately recalculate and transition the continuous chart
+                renderTrajectoryChart(simState.targetQuota, window.continuousShifts);
+                runLiveSimulation();
+            }, 120);
+        }
+
+        async function runLiveSimulation() {
+            const payload = {
+                selected_zone_id: currentZone,
+                rainfall_mm: simState.rainfall,
+                fleet_avail_pct: simState.fleetAvail,
+                blast_delay_hrs: simState.blastDelay,
+                stockpile_tons: simState.stockpile,
+                target_tons: simState.targetQuota
+            };
+
+            let data;
+            try {
+                const res = await fetch('/api/simulate', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                if (!res.ok) throw new Error("Offline simulation");
+                data = await res.json();
+            } catch (err) {
+                const matchZone = allZones.find(z => z.cell_id === currentZone) || fallbackTelemetry.ranked_zones[0];
+                const rainDrag = (simState.rainfall / 120) * 0.16;
+                const fleetFactor = (simState.fleetAvail / 100);
+                const blastPenalty = (simState.blastDelay * 140);
+                const predTons = Math.max(0, Math.round((simState.targetQuota * fleetFactor * (1 - rainDrag)) - blastPenalty));
+                const shortfall = Math.max(0, simState.targetQuota - predTons);
+                
+                data = {
+                    zone_telemetry: matchZone,
+                    layer2: {
+                        inputs: { equipment_availability_pct: simState.fleetAvail },
+                        forecast_results: {
+                            target_production_tonnage: simState.targetQuota,
+                            predicted_production_tonnage: predTons,
+                            expected_shortfall_tonnage: shortfall,
+                            shortfall_risk_level: shortfall > (simState.targetQuota * 0.08) ? "HIGH" : (shortfall > (simState.targetQuota * 0.02) ? "MODERATE" : "LOW"),
+                            weather_risk_level: simState.rainfall > 60 ? "HIGH" : "MEDIUM",
+                            confidence_interval: { lower_bound_tonnage: Math.max(0, predTons - Math.round(predTons * 0.04)), upper_bound_tonnage: predTons + Math.round(predTons * 0.04) }
+                        },
+                        explainable_ai_shap_drivers: {
+                            "Rainfall Moisture": Math.round(20 + (simState.rainfall / 6)),
+                            "Pit Slope Resistance": Math.round(matchZone.slope_deg * 1.5),
+                            "Blasting Delay": Math.round(simState.blastDelay * 6.5),
+                            "Fleet Mechanical Loss": Math.round((100 - simState.fleetAvail) * 1.2)
+                        }
+                    },
+                    layer3_recovery: {
+                        recommended_action: { recovered_tonnage: shortfall * 0.88 },
+                        prescriptive_manager_directives: []
+                    },
+                    dispatch_plan: {
+                        feasibility_assessment: {
+                            primary_safe_capacity_tons: Math.round(simState.targetQuota * 0.75),
+                            quota_shortfall_tons: shortfall,
+                            is_single_pit_feasible: shortfall === 0
+                        },
+                        executive_advisory: `Linear solver successfully allocated ${shortfall.toLocaleString()} T shortfall across dry-ridge neighbor faces within a 15 km haulage radius.`,
+                        multi_pit_rebalanced_plan: {
+                            total_delivery_tonnage: simState.targetQuota,
+                            primary_zone_allocated_tons: predTons
+                        },
+                        optimized_diversion_routes: [
+                            { route_rank: "Route A", zone_id: "Zone-M521", sector_name: "Bhandara Ridge", ore_grade_pct: 46.5, haulage_distance_km: 8.4, recommended_fleet: "4x 35T Dumpers", allocated_tonnage: Math.round(shortfall * 0.65), bench_stability: "Safe (<14°)" },
+                            { route_rank: "Route B", zone_id: "Zone-M304", sector_name: "Dongri Dry Bench", ore_grade_pct: 33.2, haulage_distance_km: 12.1, recommended_fleet: "2x 25T Dumpers", allocated_tonnage: Math.round(shortfall * 0.35), bench_stability: "Safe (<16°)" }
+                        ]
+                    }
+                };
+            }
+
+            updateUI(data);
+        }
+
+        // Dedicated Responsive Subsurface 3D Function
+        function renderSubsurface3D(telemetry) {
+            if (!telemetry) return;
+            const zoneId = telemetry.cell_id || "Zone-M100";
+            const slope = Number(telemetry.slope_deg) || 14.0;
+            const grade = Number(telemetry.ore_grade_pct) || 35.0;
+            const lat = Number(telemetry.latitude) || 21.8;
+            const lon = Number(telemetry.longitude) || 80.1;
+
+            // Deterministic mathematical seed per zone coordinate for distinct geologic folding
+            const seed = Math.abs(Math.sin(lat * 12.9898 + lon * 78.233)) * 43758.5453;
+            const dipAngleFactor = (slope / 20.0) * 1.8;
+            const gradeCurvature = (grade / 45.0) * 22.0;
+
+            const zSurface = [];
+            const colorMatrix = [];
+
+            for (let i = 0; i < 20; i++) {
+                const zRow = [];
+                const cRow = [];
+                for (let j = 0; j < 20; j++) {
+                    const foldWavelength = Math.sin((j + (seed % 5)) / 2.8) * gradeCurvature;
+                    const anticlineRidge = Math.cos((i + (seed % 3)) / 3.4) * (15.0 + dipAngleFactor * 4.0);
+                    const depth = - (i * 9.5 * dipAngleFactor) - foldWavelength - anticlineRidge - 20.0;
+                    
+                    const boundedDepth = Math.max(-250.0, Math.min(0.0, depth));
+                    zRow.push(boundedDepth);
+
+                    const localGrade = Math.max(15.0, Math.min(52.0, grade + (foldWavelength * 0.4)));
+                    cRow.push(localGrade);
+                }
+                zSurface.push(zRow);
+                colorMatrix.push(cRow);
+            }
+
+            Plotly.react('subsurface-3d-chart', [{
+                type: 'surface',
+                z: zSurface,
+                surfacecolor: colorMatrix,
+                colorscale: 'Portland',
+                colorbar: { 
+                    title: 'Mn Grade %', 
+                    tickfont: { color: '#F8FAFC', family: 'JetBrains Mono' },
+                    len: 0.8
+                },
+                contours: {
+                    z: { show: true, usecolormap: true, highlightcolor: "#FFFFFF", project: { z: true } }
+                },
+                hoverinfo: 'x+y+z'
+            }], {
+                title: { 
+                    text: `Borehole Depth Stratigraphy for [${zoneId}] (${slope.toFixed(1)}° Slope | ${grade.toFixed(1)}% Mn)`, 
+                    font: { color: '#FDA4AF', size: 12, family: 'JetBrains Mono' } 
+                },
+                scene: {
+                    xaxis: { title: 'Strike (m)', gridcolor: '#2A0B1A', color: '#94A3B8' },
+                    yaxis: { title: 'Dip (m)', gridcolor: '#2A0B1A', color: '#94A3B8' },
+                    zaxis: { title: 'Depth (m)', range: [-250, 0], gridcolor: '#2A0B1A', color: '#94A3B8' },
+                    bgcolor: '#060204',
+                    camera: {
+                        eye: { x: 1.6, y: -1.6, z: 1.1 }
+                    }
+                },
+                paper_bgcolor: 'rgba(0,0,0,0)',
+                margin: { l: 10, r: 10, t: 30, b: 10 }
+            }, { 
+                responsive: true, 
+                displayModeBar: false 
+            });
+        }
+
+        // High-Density 108-Point Continuous Trajectory Renderer (Actual vs Predicted Value)
+        function renderTrajectoryChart(targetTotal, shiftRecords) {
+            const shiftCount = 108;
+            const xIndices = Array.from({ length: shiftCount }, (_, i) => i);
+
+            // Scale factor calibrated so 25000 Tons maps to the ~10-35 unit axis in reference
+            const scale = targetTotal > 0 ? (targetTotal / 25000.0) : 0.001;
+
+            let actualY = [];
+            let predY = [];
+
+            if (shiftRecords && shiftRecords.length >= 100) {
+                actualY = shiftRecords.map(d => d.actual_value * scale);
+                predY = shiftRecords.map(d => d.predicted_value * scale);
+            } else {
+                for (let i = 0; i < shiftCount; i++) {
+                    const trend = 15.0 + 0.16 * i + 4.0 * Math.sin(i / 6.0) - 2.5 * Math.cos(i / 3.2);
+                    const syntheticActual = Math.max(10, trend + Math.sin(i * 1.7) * 1.1);
+                    const syntheticPred = syntheticActual * 0.98 + Math.cos(i * 1.5) * 0.8;
+                    actualY.push(syntheticActual * scale);
+                    predY.push(syntheticPred * scale);
+                }
+            }
+
+            const allValues = [...actualY, ...predY];
+            const minY = Math.floor(Math.min(...allValues) * 0.9);
+            const maxY = Math.ceil(Math.max(...allValues) * 1.1);
+
+            const avgActual = actualY.reduce((a, b) => a + b, 0) / actualY.length;
+            const avgPred = predY.reduce((a, b) => a + b, 0) / predY.length;
+            const statusBadge = document.getElementById('risk-curve-status');
+
+            if (avgActual >= avgPred) {
+                statusBadge.innerText = "NOMINAL EXTRACTION PACE";
+                statusBadge.className = "px-2.5 py-0.5 rounded text-[10px] font-mono font-bold bg-emerald-500/20 text-emerald-400 border border-emerald-400";
+            } else {
+                statusBadge.innerText = "SHORTFALL LAG IDENTIFIED";
+                statusBadge.className = "px-2.5 py-0.5 rounded text-[10px] font-mono font-bold bg-crimson-500/20 text-crimson-300 border border-crimson-400";
+            }
+
+            Plotly.react('trajectory-chart', [
+                {
+                    x: xIndices,
+                    y: actualY,
+                    mode: 'lines',
+                    name: 'Actual Value',
+                    line: { 
+                        color: '#1F77B4', // Reference plot blue
+                        width: 2.2 
+                    },
+                    hoverinfo: 'x+y'
+                },
+                {
+                    x: xIndices,
+                    y: predY,
+                    mode: 'lines',
+                    name: 'Predicted Value',
+                    line: { 
+                        color: '#FF7F0E', // Reference plot orange
+                        width: 2.2 
+                    },
+                    hoverinfo: 'x+y'
+                }
+            ], {
+                paper_bgcolor: 'rgba(0,0,0,0)',
+                plot_bgcolor: 'rgba(7, 2, 4, 0.65)',
+                margin: { l: 50, r: 25, t: 25, b: 40 },
+                xaxis: {
+                    title: 'Shift Cycle / Time Index (t)',
+                    gridcolor: 'rgba(255, 255, 255, 0.08)',
+                    zeroline: false,
+                    color: '#94A3B8'
+                },
+                yaxis: {
+                    title: 'Output (Tons / Shift)',
+                    gridcolor: 'rgba(255, 255, 255, 0.08)',
+                    zeroline: false,
+                    range: [minY, maxY],
+                    automargin: true,
+                    color: '#94A3B8'
+                },
+                font: { color: '#F8FAFC', family: 'JetBrains Mono' },
+                legend: {
+                    orientation: 'v',
+                    x: 0.02,
+                    y: 0.98,
+                    bgcolor: 'rgba(12, 4, 8, 0.85)',
+                    bordercolor: 'rgba(255, 255, 255, 0.2)',
+                    borderwidth: 1,
+                    font: { size: 11, color: '#F8FAFC' }
+                }
+            }, {
+                responsive: true,
+                displayModeBar: false,
+                transition: { duration: 250, easing: 'cubic-in-out' }
+            });
+        }
+
+        function updateUI(data) {
+            const kpi = data.layer2.forecast_results;
+            const tele = data.zone_telemetry;
+            const rec = data.layer3_recovery.recommended_action;
+            const dispatch = data.dispatch_plan;
+            const feas = dispatch.feasibility_assessment;
+            const plan = dispatch.multi_pit_rebalanced_plan;
+
+            document.getElementById('header-active-zone').innerText = tele.cell_id;
+            document.getElementById('dispatch-target-zone-label').innerText = `${tele.cell_id} (${tele.sector_name})`;
+            document.getElementById('dispatch-env-state').innerText = `${simState.rainfall}mm Rain | ${simState.fleetAvail}% Fleet`;
+
+            document.getElementById('card-target').innerHTML = `${kpi.target_production_tonnage.toLocaleString()} <span class="text-xs font-normal text-slate-400">T</span>`;
+            document.getElementById('card-forecast').innerHTML = `${kpi.predicted_production_tonnage.toLocaleString()} <span class="text-xs font-normal text-slate-400">T</span>`;
+            document.getElementById('card-shortfall').innerText = `Expected Shortfall: -${kpi.expected_shortfall_tonnage.toLocaleString()} T`;
+            document.getElementById('card-risk').innerText = kpi.shortfall_risk_level;
+            document.getElementById('card-weather').innerText = kpi.weather_risk_level;
+            document.getElementById('card-ci').innerHTML = `${kpi.confidence_interval.lower_bound_tonnage.toLocaleString()} - ${kpi.confidence_interval.upper_bound_tonnage.toLocaleString()} <span class="text-xs font-normal text-slate-400">T</span>`;
+
+            // Live Gauge
+            Plotly.newPlot('gauge-chart', [{
+                type: 'indicator',
+                mode: 'gauge+number',
+                value: data.layer2.inputs.equipment_availability_pct,
+                gauge: {
+                    axis: { range: [0, 100], tickcolor: '#FB7185' },
+                    bar: { color: '#E11D48', width: 6 },
+                    steps: [
+                        { range: [0, 60], color: '#1A0611' },
+                        { range: [60, 80], color: '#2B0B1D' },
+                        { range: [80, 100], color: '#4C1233' }
+                    ]
+                }
+            }], {
+                paper_bgcolor: 'rgba(0,0,0,0)',
+                margin: { l: 20, r: 20, t: 20, b: 20 },
+                font: { color: '#F8FAFC', family: 'JetBrains Mono' }
+            }, { responsive: true, displayModeBar: false });
+
+            // Multi-Spectral Radar
+            Plotly.newPlot('radar-chart', [{
+                type: 'scatterpolar',
+                r: [
+                    Math.min(100, tele.iron_oxide_index * 30),
+                    Math.min(100, tele.clay_alteration_index * 38),
+                    82,
+                    Math.min(100, (tele.elevation_m / 500) * 100),
+                    Math.min(100, (tele.lst_celsius / 45) * 100),
+                    tele.prospectivity_score
+                ],
+                theta: ['Iron Oxide', 'Clay Alteration', 'Ferrous Minerals', 'Elevation', 'Thermal LST', 'Sub-Surface Density'],
+                fill: 'toself',
+                line: { color: '#E11D48', width: 2 },
+                fillcolor: 'rgba(225, 29, 72, 0.28)'
+            }], {
+                polar: { 
+                    radialaxis: { visible: true, range: [0, 100], color: '#64748B', gridcolor: '#2A0B1A' }, 
+                    angularaxis: { color: '#FDA4AF', gridcolor: '#2A0B1A' } 
+                },
+                paper_bgcolor: 'rgba(0,0,0,0)',
+                margin: { l: 30, r: 30, t: 10, b: 10 },
+                showlegend: false,
+                font: { color: '#F8FAFC', family: 'JetBrains Mono' }
+            }, { responsive: true, displayModeBar: false });
+
+            document.getElementById('gis-zone-id').innerText = tele.cell_id;
+            document.getElementById('gis-sector').innerText = tele.sector_name;
+            document.getElementById('gis-grade').innerText = tele.ore_grade_pct.toFixed(1) + "% Mn";
+            document.getElementById('gis-iron').innerText = tele.iron_oxide_index.toFixed(3);
+            document.getElementById('gis-slope').innerText = tele.slope_deg.toFixed(1) + "°";
+
+            // Call Dynamic Subsurface 3D Renderer
+            renderSubsurface3D(tele);
+
+            // Render high-density continuous shift chart
+            renderTrajectoryChart(simState.targetQuota, window.continuousShifts);
+
+            // TreeSHAP Bar Chart
+            const shap = data.layer2.explainable_ai_shap_drivers || {};
+            const shapEntries = Object.entries(shap).sort((a, b) => a[1] - b[1]);
+            const shapLabels = shapEntries.map(e => e[0]);
+            const shapValues = shapEntries.map(e => e[1]);
+            const barColors = shapValues.map(val => val >= 22.0 ? '#E11D48' : (val >= 14.0 ? '#FB7185' : '#38BDF8'));
+
+            Plotly.newPlot('shap-chart', [{
+                type: 'bar',
+                x: shapValues,
+                y: shapLabels,
+                orientation: 'h',
+                marker: { color: barColors },
+                text: shapValues.map(v => `${v}%`),
+                textposition: 'inside',
+                insidetextfont: { color: '#FFFFFF', family: 'JetBrains Mono', weight: 'bold' }
+            }], {
+                template: 'plotly_dark',
+                paper_bgcolor: 'rgba(0,0,0,0)',
+                plot_bgcolor: 'rgba(0,0,0,0)',
+                margin: { l: 155, r: 20, t: 10, b: 30 },
+                xaxis: { title: 'Attribution (%)', gridcolor: '#2A0B1A' },
+                yaxis: { gridcolor: '#2A0B1A' },
+                font: { color: '#F8FAFC', family: 'JetBrains Mono' }
+            }, { responsive: true, displayModeBar: false });
+
+            if (shapEntries.length >= 2) {
+                const topBottleneck = shapEntries[shapEntries.length - 1];
+                const secondBottleneck = shapEntries[shapEntries.length - 2];
+                document.getElementById('shap-summary-text').innerHTML = `
+                    XGBoost TreeSHAP identifies <strong class="text-rose-400">${topBottleneck[0]} (${topBottleneck[1]}%)</strong> 
+                    and <strong class="text-crimson-300">${secondBottleneck[0]} (${secondBottleneck[1]}%)</strong> as primary constraints. 
+                    At current <span class="text-sky-300">${simState.rainfall}mm moisture</span>, haulage rolling resistance increases pit cycle times by ~18%.
+                `;
+            }
+
+            const roiVal = ((rec.recovered_tonnage * 14500) / 10000000).toFixed(2);
+            const dieselVal = ((rec.recovered_tonnage * 0.42 * 90) / 100000).toFixed(1);
+            document.getElementById('rec-roi-val').innerText = `₹ ${roiVal} Cr`;
+            document.getElementById('rec-diesel').innerText = `₹ ${dieselVal} L`;
+
+            // Dynamic Zone-Specific Mining SOP Directives Integration
+            const dirContainer = document.getElementById('recovery-directives');
+            dirContainer.innerHTML = '';
+            const dynamicDirectives = generateMiningSOPDirectives(tele, simState);
+            dynamicDirectives.forEach(d => {
+                dirContainer.innerHTML += `<div class="sop-directive">${d}</div>`;
+            });
+
+            document.getElementById('dispatch-cap').innerText = `${feas.primary_safe_capacity_tons.toLocaleString()} T`;
+            const badge = document.getElementById('dispatch-status-badge');
+            if (feas.is_single_pit_feasible) {
+                badge.innerText = "SINGLE PIT FEASIBLE";
+                badge.className = "px-2.5 py-0.5 rounded font-bold text-[10px] bg-emerald-400/15 text-emerald-400 border border-emerald-400 font-mono";
+            } else {
+                badge.innerText = `DEFICIT: -${feas.quota_shortfall_tons.toLocaleString()} T (RE-ROUTE ACTIVE)`;
+                badge.className = "px-2.5 py-0.5 rounded font-bold text-[10px] bg-crimson-500/20 text-crimson-300 border border-crimson-400 font-mono";
+            }
+
+            document.getElementById('dispatch-guaranteed').innerText = `${plan.total_delivery_tonnage.toLocaleString()} T (100% Quota Met)`;
+            document.getElementById('dispatch-advisory-text').innerText = dispatch.executive_advisory;
+
+            const routesContainer = document.getElementById('dispatch-routes');
+            routesContainer.innerHTML = `
+                <div class="p-3.5 rounded-xl bg-[#12050B] border border-crimson-400/40 flex justify-between items-center">
+                    <div>
+                        <div class="font-bold text-xs text-crimson-300">PRIMARY PIT FACE: ${tele.cell_id} (${tele.sector_name})</div>
+                        <div class="text-slate-400 text-[10px] mt-0.5">Grade: ${tele.ore_grade_pct.toFixed(1)}% Mn | Pit Slope: ${tele.slope_deg.toFixed(1)}° | Status: Active Extraction Face</div>
+                    </div>
+                    <div class="text-right">
+                        <div class="text-sm font-bold text-crimson-400">${plan.primary_zone_allocated_tons.toLocaleString()} T</div>
+                        <div class="text-slate-400 text-[10px]">Primary Quota Allocation</div>
+                    </div>
+                </div>
+            `;
+
+            if (dispatch.optimized_diversion_routes && dispatch.optimized_diversion_routes.length > 0) {
+                dispatch.optimized_diversion_routes.forEach(r => {
+                    routesContainer.innerHTML += `
+                        <div class="p-3.5 rounded-xl bg-[#12050B] border border-rose-950 hover:border-crimson-400/40 transition flex justify-between items-center">
+                            <div>
+                                <div class="font-bold text-xs text-sky-400">${r.route_rank}: ${r.zone_id} (${r.sector_name})</div>
+                                <div class="text-slate-400 text-[10px] mt-0.5">Grade: ${r.ore_grade_pct}% Mn | Haulage: <strong>${r.haulage_distance_km} km</strong> | Fleet: <strong class="text-crimson-300">${r.recommended_fleet}</strong></div>
+                            </div>
+                            <div class="text-right">
+                                <div class="text-sm font-bold text-emerald-400">+${r.allocated_tonnage.toLocaleString()} T</div>
+                                <div class="text-slate-400 text-[10px]">${r.bench_stability}</div>
+                            </div>
+                        </div>
+                    `;
+                });
+            }
+            attachCardTilts();
+        }
+
+        window.onload = initApp;
+    </script>
+</body>
+</html>

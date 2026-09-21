@@ -1,0 +1,50 @@
+{
+    "status": "Success",
+    "inputs": {
+        "target_production": 25000.0,
+        "rainfall_mm": 71.0,
+        "equipment_availability_pct": 83.0,
+        "blasting_delay_hrs": 3.5
+    },
+    "forecast_results": {
+        "target_production_tonnage": 25000.0,
+        "predicted_production_tonnage": 8955.0,
+        "expected_shortfall_tonnage": 16045.0,
+        "shortfall_risk_level": "HIGH",
+        "weather_risk_level": "HIGH",
+        "confidence_interval": {
+            "lower_bound_tonnage": 8914.0,
+            "upper_bound_tonnage": 8996.0
+        }
+    },
+    "forecast_trajectory_30_day": [
+        {
+            "week": "Week 1",
+            "target_tons": 6250.0,
+            "predicted_tons": 2194.0
+        },
+        {
+            "week": "Week 2",
+            "target_tons": 6250.0,
+            "predicted_tons": 2127.0
+        },
+        {
+            "week": "Week 3",
+            "target_tons": 6250.0,
+            "predicted_tons": 2082.0
+        },
+        {
+            "week": "Week 4",
+            "target_tons": 6250.0,
+            "predicted_tons": 2037.0
+        }
+    ],
+    "explainable_ai_shap_drivers": {
+        "Rainfall": 34.9,
+        "Blasting Delay": 29.7,
+        "Ore Accessibility": 25.0,
+        "Equipment Downtime": 10.4,
+        "Maintenance Logs": 0.0,
+        "Fleet Utilization": 0.0
+    }
+}

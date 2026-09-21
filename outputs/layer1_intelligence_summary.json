@@ -1,0 +1,144 @@
+{
+    "status": "Verified & Calibrated",
+    "foundation_model": "IBM-NASA Prithvi-EO 2.0 ViT (Hugging Face)",
+    "feature_fusion_modalities": [
+        "EO Multi-Spectral",
+        "Structural Lineaments",
+        "DEM Slope/Elevation",
+        "Climate/Moisture",
+        "Drill Assay"
+    ],
+    "total_cells_analyzed": 3000,
+    "high_priority_drilling_targets": 657,
+    "model_performance": {
+        "roc_auc": 0.9502,
+        "f1_score": 0.777,
+        "precision": 0.7877,
+        "recall": 0.7667
+    },
+    "top_drilling_target": {
+        "rank": "#1",
+        "cell_id": "Zone-M859",
+        "sector": "Dongri Buzurg-Bhandara Sector (MH)",
+        "coordinates": [
+            21.54727832561778,
+            79.74929486635156
+        ],
+        "prospectivity_score": 99.7,
+        "confidence_score": 99.9,
+        "expected_grade_pct": 28.605699050861425,
+        "priority_score": 226.35
+    },
+    "top_10_hotspots": [
+        {
+            "exploration_priority_rank": "#1",
+            "cell_id": "Zone-M859",
+            "sector_name": "Dongri Buzurg-Bhandara Sector (MH)",
+            "latitude": 21.54727832561778,
+            "longitude": 79.74929486635156,
+            "prospectivity_score": 99.7,
+            "ore_grade_pct": 28.605699050861425,
+            "confidence_score": 99.9,
+            "exploration_priority_score": 226.35
+        },
+        {
+            "exploration_priority_rank": "#2",
+            "cell_id": "Zone-M327",
+            "sector_name": "Balaghat-Bharweli Sector (MP)",
+            "latitude": 21.91087081050228,
+            "longitude": 80.23658649859149,
+            "prospectivity_score": 98.6,
+            "ore_grade_pct": 28.23806927053625,
+            "confidence_score": 99.5,
+            "exploration_priority_score": 224.47
+        },
+        {
+            "exploration_priority_rank": "#3",
+            "cell_id": "Zone-M623",
+            "sector_name": "Dongri Buzurg-Bhandara Sector (MH)",
+            "latitude": 21.551951413380174,
+            "longitude": 79.73502858057726,
+            "prospectivity_score": 99.4,
+            "ore_grade_pct": 28.36709340084076,
+            "confidence_score": 99.8,
+            "exploration_priority_score": 224.0
+        },
+        {
+            "exploration_priority_rank": "#4",
+            "cell_id": "Zone-M1575",
+            "sector_name": "Chhindwara-Sausar Sector (MP)",
+            "latitude": 21.652156323601417,
+            "longitude": 79.01285660530941,
+            "prospectivity_score": 99.3,
+            "ore_grade_pct": 26.03360424447171,
+            "confidence_score": 99.8,
+            "exploration_priority_score": 222.28
+        },
+        {
+            "exploration_priority_rank": "#5",
+            "cell_id": "Zone-M096",
+            "sector_name": "Balaghat-Bharweli Sector (MP)",
+            "latitude": 21.89875911927288,
+            "longitude": 80.26849041006572,
+            "prospectivity_score": 99.0,
+            "ore_grade_pct": 27.029086097688413,
+            "confidence_score": 99.7,
+            "exploration_priority_score": 218.99
+        },
+        {
+            "exploration_priority_rank": "#6",
+            "cell_id": "Zone-M079",
+            "sector_name": "Balaghat-Bharweli Sector (MP)",
+            "latitude": 21.871693145708853,
+            "longitude": 80.2730290732699,
+            "prospectivity_score": 99.2,
+            "ore_grade_pct": 28.188566714753986,
+            "confidence_score": 99.7,
+            "exploration_priority_score": 213.17
+        },
+        {
+            "exploration_priority_rank": "#7",
+            "cell_id": "Zone-M1943",
+            "sector_name": "Chhindwara-Sausar Sector (MP)",
+            "latitude": 21.654063721648768,
+            "longitude": 79.03162751376402,
+            "prospectivity_score": 98.0,
+            "ore_grade_pct": 26.311633517221537,
+            "confidence_score": 99.3,
+            "exploration_priority_score": 209.78
+        },
+        {
+            "exploration_priority_rank": "#8",
+            "cell_id": "Zone-M1711",
+            "sector_name": "Chhindwara-Sausar Sector (MP)",
+            "latitude": 21.658970711567207,
+            "longitude": 78.9788028211899,
+            "prospectivity_score": 99.2,
+            "ore_grade_pct": 25.361018535620826,
+            "confidence_score": 99.7,
+            "exploration_priority_score": 208.79
+        },
+        {
+            "exploration_priority_rank": "#9",
+            "cell_id": "Zone-M1421",
+            "sector_name": "Mansar-Nagpur Sector (MH)",
+            "latitude": 21.40399422873248,
+            "longitude": 79.36286902198228,
+            "prospectivity_score": 99.3,
+            "ore_grade_pct": 26.45948815242984,
+            "confidence_score": 99.7,
+            "exploration_priority_score": 208.15
+        },
+        {
+            "exploration_priority_rank": "#10",
+            "cell_id": "Zone-M1400",
+            "sector_name": "Mansar-Nagpur Sector (MH)",
+            "latitude": 21.41617232375702,
+            "longitude": 79.33629770727258,
+            "prospectivity_score": 99.7,
+            "ore_grade_pct": 28.34049102065792,
+            "confidence_score": 99.9,
+            "exploration_priority_score": 203.0
+        }
+    ]
+}

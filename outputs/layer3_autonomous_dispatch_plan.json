@@ -1,0 +1,50 @@
+{
+    "status": "Success",
+    "inputs": {
+        "selected_zone_id": "Zone-M193",
+        "sector_name": "Bhandara-Nagpur Corridor (MH)",
+        "target_production_tons": 25000.0,
+        "shift_hours": 8.0,
+        "active_fleet_count": 12,
+        "rainfall_mm": 71.0,
+        "fleet_avail_pct": 83.0
+    },
+    "feasibility_assessment": {
+        "is_single_pit_feasible": false,
+        "primary_zone_id": "Zone-M193",
+        "primary_safe_capacity_tons": 6517.0,
+        "quota_shortfall_tons": 18483.0,
+        "slope_stability_factor": 0.87,
+        "moisture_penalty_factor": 0.86
+    },
+    "multi_pit_rebalanced_plan": {
+        "primary_zone_allocated_tons": 6517.0,
+        "auxiliary_routes_allocated_tons": 18483.0,
+        "total_delivery_tonnage": 25000.0,
+        "unmet_shortfall_tons": 0.0,
+        "is_target_fully_met": true
+    },
+    "optimized_diversion_routes": [
+        {
+            "route_rank": "Neighbor Pit #1",
+            "zone_id": "Zone-M260",
+            "sector_name": "Balaghat Belt (MP)",
+            "allocated_tonnage": 11500.0,
+            "ore_grade_pct": 44.5,
+            "haulage_distance_km": 27.18,
+            "recommended_fleet": "3x Excavators, 8x 50-T Dumpers",
+            "bench_stability": "High (Dry Ridge)"
+        },
+        {
+            "route_rank": "Neighbor Pit #2",
+            "zone_id": "Zone-M413",
+            "sector_name": "Bhandara-Nagpur Corridor (MH)",
+            "allocated_tonnage": 6983.0,
+            "ore_grade_pct": 46.0,
+            "haulage_distance_km": 27.17,
+            "recommended_fleet": "2x Excavators, 8x 50-T Dumpers",
+            "bench_stability": "High (Dry Ridge)"
+        }
+    ],
+    "executive_advisory": "\u26a0\ufe0f BOTTLENECK DETECTED: Requested target (25,000 T) EXCEEDS the safe physical limit of [Zone-M193] (6,517 T max safe capacity due to 13.0\u00b0 slope & 36.9% moisture). Shortfall of 18,483 T prevented. AI re-routed extraction across neighbor pits (Zone-M260, Zone-M413) to guarantee 100% quota delivery with 95% Bayesian confidence."
+}

@@ -1,0 +1,10 @@
+numpy
+pandas
+scikit-learn
+xgboost
+geopandas
+shapely
+rasterio
+folium
+matplotlib
+torch
