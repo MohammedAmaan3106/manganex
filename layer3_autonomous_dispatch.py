@@ -2,6 +2,7 @@ import os
 import json
 import pandas as pd
 import numpy as np
+from runtime_paths import INPUT_OUTPUTS_DIR, OUTPUTS_DIR
 
 def compute_multi_pit_dispatch_optimization(
     selected_zone_id="Zone-M100",
@@ -12,7 +13,7 @@ def compute_multi_pit_dispatch_optimization(
     fleet_avail_pct=78.0,
     blast_delay_hrs=3.0
 ):
-    ranked_path = 'outputs/manganese_exploration_ranked.csv'
+    ranked_path = INPUT_OUTPUTS_DIR / 'manganese_exploration_ranked.csv'
     if not os.path.exists(ranked_path):
         raise FileNotFoundError("Missing outputs/manganese_exploration_ranked.csv. Ensure Layer 1 has run.")
         
@@ -149,8 +150,8 @@ def compute_multi_pit_dispatch_optimization(
         "executive_advisory": executive_advisory
     }
     
-    os.makedirs('outputs', exist_ok=True)
-    with open('outputs/layer3_autonomous_dispatch_plan.json', 'w') as f:
+    OUTPUTS_DIR.mkdir(parents=True, exist_ok=True)
+    with open(OUTPUTS_DIR / 'layer3_autonomous_dispatch_plan.json', 'w') as f:
         json.dump(dispatch_results, f, indent=4)
         
     return dispatch_results
