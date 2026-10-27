@@ -1061,7 +1061,7 @@
 
             let data;
             try {
-                const res = await fetch('/api/initial-telemetry');
+                const res = await fetch(`${window.MANGANEX_API_BASE || ""}/api/initial-telemetry`);
                 if (!res.ok) throw new Error("Offline mode");
                 data = await res.json();
             } catch (err) {
@@ -1134,7 +1134,7 @@
 
         async function fetchShiftSeries(zoneId) {
             try {
-                const res = await fetch(`/api/db/continuous-shifts/${zoneId}`);
+                const res = await fetch(`${window.MANGANEX_API_BASE || ""}/api/db/continuous-shifts/${zoneId}`);
                 if (res.ok) {
                     const data = await res.json();
                     window.continuousShifts = data.shifts;
@@ -1236,7 +1236,7 @@
 
             let data;
             try {
-                const res = await fetch('/api/simulate', {
+                const res = await fetch(`${window.MANGANEX_API_BASE || ""}/api/simulate`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(payload)
