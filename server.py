@@ -8,6 +8,7 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
+from runtime_paths import BASE_DIR, INPUT_OUTPUTS_DIR, STATIC_DIR, DB_PATH
 
 from layer2_production_model import train_and_run_production_intelligence
 from layer3_recovery_engine import run_dynamic_recovery_simulation
@@ -23,7 +24,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-DB_PATH = "manganex.db"
+
 
 def get_db_connection():
     conn = sqlite3.connect(DB_PATH)
@@ -135,7 +136,7 @@ def auto_init_db():
 
 auto_init_db()
 
-app.mount("/static", StaticFiles(directory="static"), name="static")
+app.mount("/static", StaticFiles(directory=str(STATIC_DIR)), name="static")
 
 class SimulationRequest(BaseModel):
     selected_zone_id: str = "Zone-M100"
@@ -147,14 +148,14 @@ class SimulationRequest(BaseModel):
 
 @app.get("/")
 def serve_dashboard():
-    return FileResponse("static/index.html")
+    return FileResponse(str(STATIC_DIR / "index.html"))
 
 @app.get("/api/initial-telemetry")
 def get_initial_telemetry():
-    df_ranked = pd.read_csv('outputs/manganese_exploration_ranked.csv')
-    with open('outputs/layer1_intelligence_summary.json', 'r') as f:
+    df_ranked = pd.read_csv(INPUT_OUTPUTS_DIR / "manganese_exploration_ranked.csv")
+    with open(INPUT_OUTPUTS_DIR / "layer1_intelligence_summary.json", "r") as f:
         l1 = json.load(f)
-    with open('outputs/layer2_production_forecast.json', 'r') as f:
+    with open(INPUT_OUTPUTS_DIR / "layer2_production_forecast.json", "r") as f:
         l2 = json.load(f)
         
     return {
