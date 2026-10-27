@@ -2,6 +2,7 @@ import json
 import os
 import pandas as pd
 import numpy as np
+from runtime_paths import OUTPUTS_DIR
 
 def run_dynamic_recovery_simulation(
     selected_zone_id="Zone-M001",
@@ -18,7 +19,7 @@ def run_dynamic_recovery_simulation(
     print("=================================================================")
     
     # Ingest Layer 2 forecast baseline
-    l2_path = 'outputs/layer2_production_forecast.json'
+    l2_path = OUTPUTS_DIR / 'layer2_production_forecast.json'
     if os.path.exists(l2_path):
         with open(l2_path, 'r') as f:
             l2_data = json.load(f)
@@ -107,8 +108,8 @@ def run_dynamic_recovery_simulation(
         "prescriptive_manager_directives": sop_directives
     }
     
-    os.makedirs('outputs', exist_ok=True)
-    with open('outputs/layer3_action_twin_recommendations.json', 'w') as f:
+    OUTPUTS_DIR.mkdir(parents=True, exist_ok=True)
+    with open(OUTPUTS_DIR / 'layer3_action_twin_recommendations.json', 'w') as f:
         json.dump(output, f, indent=4)
         
     print(f"[SUCCESS] Closed-loop simulation complete for {selected_zone_id}.")
