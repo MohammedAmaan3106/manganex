@@ -1,0 +1,9 @@
+# This Vercel project serves only the static dashboard from /static.
+# The FastAPI backend and ML runtime are hosted separately.
+*.py
+requirements*.txt
+runtime_paths.py
+outputs/
+data/
+models/
+*.db
