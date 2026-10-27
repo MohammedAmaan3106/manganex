@@ -4,6 +4,7 @@ import numpy as np
 import pandas as pd
 import xgboost as xgb
 import joblib
+from runtime_paths import OUTPUTS_DIR, MODELS_DIR, DATA_PROCESSED_DIR, INPUT_OUTPUTS_DIR
 
 # Graceful SHAP handling
 try:
@@ -23,15 +24,15 @@ def train_and_run_production_intelligence(
     print("=================================================================")
     print("  MANGANEX: LAYER 2 - DYNAMIC PRODUCTION INTELLIGENCE (XGBOOST)  ")
     print("=================================================================")
-    os.makedirs('data/processed', exist_ok=True)
-    os.makedirs('models', exist_ok=True)
-    os.makedirs('outputs', exist_ok=True)
+    DATA_PROCESSED_DIR.mkdir(parents=True, exist_ok=True)
+    MODELS_DIR.mkdir(parents=True, exist_ok=True)
+    OUTPUTS_DIR.mkdir(parents=True, exist_ok=True)
     
     np.random.seed(42)
     num_samples = 1500
     
     # Ingest Layer 1 Top Prospectivity
-    l1_summary_path = 'outputs/layer1_intelligence_summary.json'
+    l1_summary_path = INPUT_OUTPUTS_DIR / 'layer1_intelligence_summary.json'
     l1_prospect_bonus = 0.0
     if os.path.exists(l1_summary_path):
         with open(l1_summary_path, 'r') as f:
@@ -68,7 +69,7 @@ def train_and_run_production_intelligence(
         'maintenance_backlog_hrs': maint_backlog,
         'daily_production_tons': daily_production
     })
-    df_ops.to_csv('data/processed/mine_operational_records.csv', index=False)
+    df_ops.to_csv(DATA_PROCESSED_DIR / 'mine_operational_records.csv', index=False)
     
     # 2. Train XGBoost Forecaster
     feature_cols = [
@@ -87,7 +88,7 @@ def train_and_run_production_intelligence(
         random_state=42
     )
     model.fit(X, y)
-    joblib.dump(model, 'models/layer2_xgboost_production_model.pkl')
+    joblib.dump(model, MODELS_DIR / 'layer2_xgboost_production_model.pkl')
     
     # 3. Dynamic Inference for Active Cycle
     equip_downtime_input = float(max(0.5, (100.0 - active_equip_availability_pct) / 2.8))
@@ -179,7 +180,7 @@ def train_and_run_production_intelligence(
         "explainable_ai_shap_drivers": sorted_shap
     }
     
-    with open('outputs/layer2_production_forecast.json', 'w') as f:
+    with open(OUTPUTS_DIR / 'layer2_production_forecast.json', 'w') as f:
         json.dump(layer2_output, f, indent=4)
         
     print(f"\n[DYNAMIC FORECAST SUMMARY]")
