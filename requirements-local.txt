@@ -1,0 +1,13 @@
+# Full local development environment, including Streamlit and geospatial pipeline tools.
+-r requirements.txt
+scikit-learn
+geopandas
+shapely
+rasterio
+folium
+matplotlib
+torch
+streamlit
+streamlit-folium
+plotly
+shap
