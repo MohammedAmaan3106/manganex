@@ -44,4 +44,13 @@ Developed for **Smart India Hackathon 2026** (Problem Statement: **PS-26009**) b
 ```bash
 git clone [https://github.com/MohammedAmaan3106/manganex.git](https://github.com/MohammedAmaan3106/manganex.git)
 cd manganex
-pip install -r requirements.txt
+pip install -r requirements-local.txt
+
+
+## Deployment
+
+### Vercel (web dashboard + FastAPI demo API)
+
+The repository includes `vercel.json` and `api/index.py` for Vercel's Python runtime. Vercel runs generated model/database artifacts under `/tmp/manganex`; those artifacts are ephemeral and are not a persistent production database. The checked-in exploration CSV/JSON files remain read-only source data.
+
+For local full-feature development, install `requirements-local.txt`. The lean `requirements.txt` is for the deployed API. Large earth-observation ingestion/training jobs should be run as separate batch jobs rather than inside a serverless request.
