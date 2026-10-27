@@ -1,2 +1,2 @@
-// Set this to the deployed FastAPI backend URL when it is available.
-window.MANGANEX_API_BASE = "";
+// Public FastAPI backend deployed on Render.
+window.MANGANEX_API_BASE = "https://manganex-api.onrender.com";
