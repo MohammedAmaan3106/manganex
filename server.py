@@ -208,7 +208,7 @@ def get_continuous_shifts(zone_id: str):
 
 @app.post("/api/simulate")
 def run_simulation(req: SimulationRequest):
-    df_ranked = pd.read_csv('outputs/manganese_exploration_ranked.csv')
+    df_ranked = pd.read_csv(INPUT_OUTPUTS_DIR / "manganese_exploration_ranked.csv")
     matched = df_ranked[df_ranked['cell_id'] == req.selected_zone_id]
     if matched.empty:
         matched = df_ranked.iloc[0]
